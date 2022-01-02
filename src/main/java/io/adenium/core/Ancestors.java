@@ -1,8 +1,14 @@
 package io.adenium.core;
 
+<<<<<<< HEAD:src/main/java/io/adenium/core/Ancestors.java
 import io.adenium.exceptions.WolkenException;
 import io.adenium.serialization.SerializableI;
 import io.adenium.utils.Utils;
+=======
+import io.adenium.exceptions.AdeniumException;
+import io.adenium.serialization.SerializableI;
+import io.adenium.utils.VarInt;
+>>>>>>> 0.01a:src/main/java/org/wolkenproject/core/Ancestors.java
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -64,20 +70,17 @@ public class Ancestors extends SerializableI {
     }
 
     @Override
-    public void write(OutputStream stream) throws IOException, WolkenException {
+    public void write(OutputStream stream) throws IOException, AdeniumException {
         stream.write(hash);
-        Utils.writeInt(hashes.size(), stream);
+        VarInt.writeCompactUInt32(hashes.size(), false, stream);
         for (byte hash[] : hashes) {
             stream.write(hash);
         }
     }
 
     @Override
-    public void read(InputStream stream) throws IOException, WolkenException {
-        stream.read(hash);
-        byte buffer[] = new byte[4];
-        stream.read(buffer, 0, 4);
-        int length = Utils.makeInt(buffer);
+    public void read(InputStream stream) throws IOException, AdeniumException {
+        int length = VarInt.readCompactUInt32(false, stream);
 
         for (int i = 0; i < length; i ++) {
             byte hash[] = new byte[Block.UniqueIdentifierLength];
@@ -87,7 +90,7 @@ public class Ancestors extends SerializableI {
     }
 
     @Override
-    public <Type extends SerializableI> Type newInstance(Object... object) throws WolkenException {
+    public <Type extends SerializableI> Type newInstance(Object... object) throws AdeniumException {
         return (Type) new Ancestors(new byte[Block.UniqueIdentifierLength]);
     }
 

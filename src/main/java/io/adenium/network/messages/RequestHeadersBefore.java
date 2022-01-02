@@ -4,12 +4,20 @@ import io.adenium.core.Block;
 import io.adenium.core.BlockHeader;
 import io.adenium.core.BlockIndex;
 import io.adenium.core.Context;
+<<<<<<< HEAD:src/main/java/io/adenium/network/messages/RequestHeadersBefore.java
 import io.adenium.exceptions.WolkenException;
 import io.adenium.serialization.SerializableI;
+=======
+import io.adenium.exceptions.AdeniumException;
+>>>>>>> 0.01a:src/main/java/org/wolkenproject/network/messages/RequestHeadersBefore.java
 import io.adenium.network.Message;
 import io.adenium.network.Node;
 import io.adenium.network.ResponseMetadata;
 import io.adenium.network.Server;
+<<<<<<< HEAD:src/main/java/io/adenium/network/messages/RequestHeadersBefore.java
+=======
+import io.adenium.serialization.SerializableI;
+>>>>>>> 0.01a:src/main/java/org/wolkenproject/network/messages/RequestHeadersBefore.java
 import io.adenium.utils.Utils;
 
 import java.io.IOException;
@@ -47,7 +55,7 @@ public class RequestHeadersBefore extends Message {
 
         // if it doesn't exist then respond with an error
         if (index == null) {
-            node.sendMessage(new FailedToRespondMessage(Context.getInstance().getNetworkParameters().getVersion(), FailedToRespondMessage.ReasonFlags.CouldNotFindRequestedData, getUniqueMessageIdentifier()));
+            node.sendMessage(new FailedToRespondMessage(Context.getInstance().getContextParams().getVersion(), FailedToRespondMessage.ReasonFlags.CouldNotFindRequestedData, getUniqueMessageIdentifier()));
             return;
         }
 
@@ -58,13 +66,13 @@ public class RequestHeadersBefore extends Message {
             // database internal error
             // this should not happen
             if (header == null) {
-                node.sendMessage(new FailedToRespondMessage(Context.getInstance().getNetworkParameters().getVersion(), FailedToRespondMessage.ReasonFlags.CouldNotFindRequestedData, getUniqueMessageIdentifier()));
+                node.sendMessage(new FailedToRespondMessage(Context.getInstance().getContextParams().getVersion(), FailedToRespondMessage.ReasonFlags.CouldNotFindRequestedData, getUniqueMessageIdentifier()));
                 return;
             }
         }
 
         // send the headers
-        node.sendMessage(new HeaderList(Context.getInstance().getNetworkParameters().getVersion(), headers, getUniqueMessageIdentifier()));
+        node.sendMessage(new HeaderList(Context.getInstance().getContextParams().getVersion(), headers, getUniqueMessageIdentifier()));
     }
 
     @Override
@@ -75,10 +83,8 @@ public class RequestHeadersBefore extends Message {
 
     @Override
     public void readContents(InputStream stream) throws IOException {
-        stream.read(hash);
-        byte buffer[] = new byte[4];
-        stream.read(buffer);
-        count = Utils.makeInt(buffer);
+        checkFullyRead(stream.read(hash), Block.UniqueIdentifierLength);
+        count = Utils.readInt(stream);
     }
 
     @Override
@@ -126,7 +132,7 @@ public class RequestHeadersBefore extends Message {
     }
 
     @Override
-    public <Type extends SerializableI> Type newInstance(Object... object) throws WolkenException {
+    public <Type extends SerializableI> Type newInstance(Object... object) throws AdeniumException {
         return (Type) new RequestHeadersBefore(getVersion(), new byte[Block.UniqueIdentifierLength], 0, new BlockHeader());
     }
 

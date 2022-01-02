@@ -1,18 +1,29 @@
 package io.adenium.core;
 
+import io.adenium.exceptions.AdeniumException;
+import io.adenium.serialization.SerializableI;
+import io.adenium.utils.VarInt;
 import org.json.JSONObject;
+<<<<<<< HEAD:src/main/java/io/adenium/core/Account.java
 import io.adenium.exceptions.WolkenException;
 import io.adenium.serialization.SerializableI;
 import io.adenium.utils.VarInt;
+=======
+>>>>>>> 0.01a:src/main/java/org/wolkenproject/core/Account.java
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.math.BigInteger;
 
 public class Account extends SerializableI {
+    /* used for transaction indexing */
     private long    nonce;
+    /* the current balance of this account */
     private long    balance;
+    /* true if the account has an alias */
     private boolean hasAlias;
+    /* the account alias */
     private long    alias;
 
     public Account() {
@@ -27,7 +38,7 @@ public class Account extends SerializableI {
     }
 
     @Override
-    public void write(OutputStream stream) throws IOException, WolkenException {
+    public void write(OutputStream stream) throws IOException, AdeniumException {
         // in the case of nonce 2^61-1 should suffice for now
         VarInt.writeCompactUInt64(nonce, false, stream);
         // as for balance, coincidentally/fortunately, the maximum
@@ -43,7 +54,7 @@ public class Account extends SerializableI {
     }
 
     @Override
-    public void read(InputStream stream) throws IOException, WolkenException {
+    public void read(InputStream stream) throws IOException, AdeniumException {
         nonce   = VarInt.readCompactUInt64(false, stream);
         balance = VarInt.readCompactUInt64(false, stream);
 
@@ -55,7 +66,7 @@ public class Account extends SerializableI {
     }
 
     @Override
-    public <Type extends SerializableI> Type newInstance(Object... object) throws WolkenException {
+    public <Type extends SerializableI> Type newInstance(Object... object) throws AdeniumException {
         return (Type) new Account(0, 0, false, 0);
     }
 
@@ -88,6 +99,14 @@ public class Account extends SerializableI {
         return new Account(nonce, balance - amount, hasAlias, alias);
     }
 
+    public Account undoWithdraw(long amount) {
+        return new Account(nonce, balance + amount, hasAlias, alias);
+    }
+
+    public Account undoDeposit(long amount) {
+        return new Account(nonce, balance - amount, hasAlias, alias);
+    }
+
     public Account deposit(long amount) {
         return new Account(nonce, balance + amount, hasAlias, alias);
     }
@@ -99,5 +118,9 @@ public class Account extends SerializableI {
         }
 
         return json;
+    }
+
+    public BigInteger getBalanceForToken(byte[] uuid) {
+        return BigInteger.ZERO;
     }
 }

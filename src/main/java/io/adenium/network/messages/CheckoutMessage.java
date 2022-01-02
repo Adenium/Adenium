@@ -1,12 +1,20 @@
 package io.adenium.network.messages;
 
 import io.adenium.core.Context;
+<<<<<<< HEAD:src/main/java/io/adenium/network/messages/CheckoutMessage.java
 import io.adenium.exceptions.WolkenException;
 import io.adenium.serialization.SerializableI;
+=======
+import io.adenium.exceptions.AdeniumException;
+>>>>>>> 0.01a:src/main/java/org/wolkenproject/network/messages/CheckoutMessage.java
 import io.adenium.network.Message;
 import io.adenium.network.Node;
 import io.adenium.network.ResponseMetadata;
 import io.adenium.network.Server;
+<<<<<<< HEAD:src/main/java/io/adenium/network/messages/CheckoutMessage.java
+=======
+import io.adenium.serialization.SerializableI;
+>>>>>>> 0.01a:src/main/java/org/wolkenproject/network/messages/CheckoutMessage.java
 import io.adenium.utils.Logger;
 import io.adenium.utils.VarInt;
 
@@ -24,18 +32,18 @@ public class CheckoutMessage extends Message {
     private int reason;
 
     public CheckoutMessage(int reason) {
-        super(Flags.Notify, Context.getInstance().getNetworkParameters().getVersion());
+        super(Flags.Notify, Context.getInstance().getContextParams().getVersion());
         this.reason = reason;
     }
 
     @Override
     public void executePayload(Server server, Node node) {
-        Logger.alert("node ${n} requested to disconnect for reason ${r}", node.getInetAddress(), reason);
+        Logger.alert("node ${n} requested to disconnect for reason ${r}", Logger.Levels.AlertMessage, node.getInetAddress(), reason);
 
         try {
             node.close();
         } catch (IOException e) {
-            Logger.alert("could not disconnect from node properly.");
+            Logger.alert("could not disconnect from node properly.", Logger.Levels.AlertMessage);
             e.printStackTrace();
         }
 
@@ -60,12 +68,12 @@ public class CheckoutMessage extends Message {
     }
 
     @Override
-    public void writeContents(OutputStream stream) throws IOException, WolkenException {
+    public void writeContents(OutputStream stream) throws IOException, AdeniumException {
         VarInt.writeCompactUInt32(reason, false, stream);
     }
 
     @Override
-    public void readContents(InputStream stream) throws IOException, WolkenException {
+    public void readContents(InputStream stream) throws IOException, AdeniumException {
         reason = VarInt.readCompactUInt32(false, stream);
     }
 
@@ -80,7 +88,7 @@ public class CheckoutMessage extends Message {
     }
 
     @Override
-    public <Type extends SerializableI> Type newInstance(Object... object) throws WolkenException {
+    public <Type extends SerializableI> Type newInstance(Object... object) throws AdeniumException {
         return (Type) new CheckoutMessage(0);
     }
 

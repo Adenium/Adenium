@@ -1,5 +1,6 @@
 package io.adenium.core.transactions;
 
+<<<<<<< HEAD:src/main/java/io/adenium/core/transactions/RegisterAliasTransaction.java
 import io.adenium.core.Address;
 import io.adenium.core.Block;
 import io.adenium.core.BlockStateChange;
@@ -13,6 +14,17 @@ import io.adenium.serialization.SerializableI;
 import io.adenium.utils.VarInt;
 import org.json.JSONObject;
 import org.wolkenproject.core.*;
+=======
+import io.adenium.core.*;
+import io.adenium.crypto.ec.RecoverableSignature;
+import org.json.JSONObject;
+import io.adenium.core.events.RegisterAliasEvent;
+import io.adenium.crypto.Signature;
+import io.adenium.encoders.Base16;
+import io.adenium.exceptions.AdeniumException;
+import io.adenium.serialization.SerializableI;
+import io.adenium.utils.VarInt;
+>>>>>>> 0.01a:src/main/java/org/wolkenproject/core/transactions/RegisterAliasTransaction.java
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -32,7 +44,7 @@ public class RegisterAliasTransaction extends Transaction {
         this(0, 0, 0);
     }
 
-    private RegisterAliasTransaction(long nonce, long fee, long alias) {
+    protected RegisterAliasTransaction(long nonce, long fee, long alias) {
         this.nonce  = nonce;
         this.fee    = fee;
         this.alias  = alias;
@@ -46,12 +58,12 @@ public class RegisterAliasTransaction extends Transaction {
 
     @Override
     public long getTransactionValue() {
-        return Context.getInstance().getNetworkParameters().getAliasRegistrationCost();
+        return 0;
     }
 
     @Override
     public long getTransactionFee() {
-        return fee;
+        return fee + Context.getInstance().getContextParams().getAliasRegistrationCost();
     }
 
     @Override
@@ -65,25 +77,41 @@ public class RegisterAliasTransaction extends Transaction {
     }
 
     @Override
-    public boolean shallowVerify() {
+    public TransactionCode checkTransaction() {
         // this is not 100% necessary
         // a transfer of 0 with a fee of 0 is not allowed
         try {
-            return
+            Account account = Context.getInstance().getDatabase().findAccount(getSender().getRaw());
+            if (account == null) {
+                return TransactionCode.InvalidTransaction;
+            }
+
+            boolean valid =
                     fee > 0 &&
-                    (Context.getInstance().getDatabase().findAccount(getSender().getRaw()).getNonce() + 1) == nonce &&
-                            (signature.getR().length == 32) &&
-                            (signature.getS().length == 32) &&
-                            getSender() != null &&
-                            !Context.getInstance().getDatabase().findAccount(getSender().getRaw()).hasAlias();
-        } catch (WolkenException e) {
+                    account.getNonce() < nonce &&
+                    !account.hasAlias() &&
+                    !Context.getInstance().getDatabase().checkAccountExists(alias) &&
+                    (signature.getR().length == 32) &&
+                    (signature.getS().length == 32) &&
+                    getSender() != null;
+
+            if (!valid) {
+                return TransactionCode.InvalidTransaction;
+            }
+
+            if (isFutureNonce(account.getNonce(), nonce)) {
+                return TransactionCode.FutureTransaction;
+            }
+
+            return TransactionCode.ValidTransaction;
+        } catch (AdeniumException e) {
         }
 
-        return false;
+        return TransactionCode.InvalidTransaction;
     }
 
     @Override
-    public Address getSender() throws WolkenException {
+    public Address getSender() throws AdeniumException {
         return Address.fromKey(signature.recover(asByteArray()));
     }
 
@@ -103,20 +131,20 @@ public class RegisterAliasTransaction extends Transaction {
     }
 
     @Override
-    public long calculateSize() {
+    public int calculateSize() {
         return
                 VarInt.sizeOfCompactUin32(getVersion(), false) +
-                        VarInt.sizeOfCompactUin64(nonce, false) +
-                        VarInt.sizeOfCompactUin64(alias, false) + 65;
+                VarInt.sizeOfCompactUin64(nonce, false) +
+                VarInt.sizeOfCompactUin64(alias, false) + 65;
     }
 
     @Override
-    public boolean verify(Block block, int blockHeight, long fees) {
+    public boolean verify(BlockStateChange blockStateChange, Block block, int blockHeight, long fees) {
         return false;
     }
 
     @Override
-    public void getStateChange(Block block, int blockHeight, BlockStateChange stateChange) throws WolkenException {
+    public void getStateChange(Block block, BlockStateChange stateChange) throws AdeniumException {
         Address sender = getSender();
         stateChange.createAccountIfDoesNotExist(sender.getRaw());
         stateChange.addEvent(new RegisterAliasEvent(sender.getRaw(), alias));
@@ -124,18 +152,18 @@ public class RegisterAliasTransaction extends Transaction {
 
     @Override
     public JSONObject toJson(boolean txEvt, boolean evHash) {
-        JSONObject txHeader = new JSONObject().put("transaction", getClass().getName()).put("version", getVersion());
+        JSONObject txHeader = new JSONObject().put("name", getClass().getName()).put("version", getVersion());
         txHeader.put("content", new JSONObject().put("nonce", nonce).put("fee", fee).put("alias", alias).put("v", signature.getV()).put("r", Base16.encode(signature.getR())).put("s", Base16.encode(signature.getS())));
         return txHeader;
     }
 
     @Override
-    protected void setSignature(Signature signature) throws WolkenException {
+    protected void setSignature(Signature signature) throws AdeniumException {
         if (signature instanceof RecoverableSignature) {
             this.signature = (RecoverableSignature) signature;
         }
 
-        throw new WolkenException("invalid signature type '" + signature.getClass() + "'.");
+        throw new AdeniumException("invalid signature type '" + signature.getClass() + "'.");
     }
 
     @Override
@@ -144,19 +172,19 @@ public class RegisterAliasTransaction extends Transaction {
     }
 
     @Override
-    public void write(OutputStream stream) throws IOException, WolkenException {
+    public void write(OutputStream stream) throws IOException, AdeniumException {
         signature.write(stream);
         VarInt.writeCompactUInt64(alias, false, stream);
     }
 
     @Override
-    public void read(InputStream stream) throws IOException, WolkenException {
+    public void read(InputStream stream) throws IOException, AdeniumException {
         signature.read(stream);
         alias = VarInt.readCompactUInt64(false, stream);
     }
 
     @Override
-    public <Type extends SerializableI> Type newInstance(Object... object) throws WolkenException {
+    public <Type extends SerializableI> Type newInstance(Object... object) throws AdeniumException {
         return (Type) new RegisterAliasTransaction();
     }
 

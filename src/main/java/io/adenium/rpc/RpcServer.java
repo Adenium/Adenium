@@ -3,8 +3,26 @@ package io.adenium.rpc;
 import com.sun.net.httpserver.Headers;
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpServer;
-import org.json.JSONArray;
+import io.adenium.core.Address;
+import io.adenium.core.BlockHeader;
+import io.adenium.core.BlockIndex;
+import io.adenium.core.Context;
+import io.adenium.core.consensus.CandidateBlock;
+import io.adenium.core.consensus.MinedBlockCandidate;
+import io.adenium.core.transactions.Transaction;
+import io.adenium.crypto.Keypair;
+import io.adenium.encoders.Base16;
+import io.adenium.encoders.Base58;
+import io.adenium.exceptions.AdeniumException;
+import io.adenium.network.Message;
+import io.adenium.network.messages.Inv;
+import io.adenium.utils.ChainMath;
+import io.adenium.utils.Logger;
+import io.adenium.utils.Utils;
+import io.adenium.utils.VoidCallableThrowsT;
+import io.adenium.wallet.Wallet;
 import org.json.JSONObject;
+<<<<<<< HEAD:src/main/java/io/adenium/rpc/RpcServer.java
 import io.adenium.core.Address;
 import io.adenium.core.BlockIndex;
 import io.adenium.core.Context;
@@ -19,6 +37,8 @@ import io.adenium.network.messages.Inv;
 import io.adenium.utils.Logger;
 import io.adenium.utils.VoidCallableThrowsT;
 import io.adenium.wallet.Wallet;
+=======
+>>>>>>> 0.01a:src/main/java/org/wolkenproject/rpc/RpcServer.java
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -34,20 +54,21 @@ import java.util.concurrent.locks.ReentrantLock;
 
 public class RpcServer {
     private HttpServer          server;
-    private Context             context;
+    private Context context;
     private UrlPath[]           paths;
     private Set<Request>        handlers;
     private ExecutorService     executor;
-    private Wallet              wallet;
+    private Wallet wallet;
     private byte                passphrase[];
     private long                passphraseTimeout;
     private long                passphraseTimestamp;
     private ReentrantLock       mutex;
+    private BlockIndex nextBlock;
 
     public RpcServer(Context context, int port) throws IOException {
-        Logger.alert("=============================================");
-        Logger.alert("Starting HTTP server");
-        Logger.alert("=============================================");
+        Logger.alert("=============================================", Logger.Levels.AlertMessage);
+        Logger.alert("Starting HTTP server", Logger.Levels.AlertMessage);
+        Logger.alert("=============================================", Logger.Levels.AlertMessage);
 
         server      = HttpServer.create(new InetSocketAddress(port), 12);
         handlers    = new LinkedHashSet<>();
@@ -59,6 +80,7 @@ public class RpcServer {
         onGet("/portfolio", response -> response.sendFile("/rpc/portfolio.html"));
         onGet("/login", response -> response.sendFile("/rpc/login.html"));
         onGet("/api", RpcServer::apiRequest);
+        onGet("/submit", msg->System.out.println(msg.getQuery() + " " + msg.getBodyUTF()));
         onGet("/content/:filename", response -> response.sendFile("/rpc/${filename}"));
 
         server.createContext("/", exchange -> {
@@ -113,11 +135,25 @@ public class RpcServer {
     }
 
     public static void apiRequest(Messenger msg) throws IOException {
-        JSONObject request = msg.getFormattedQuery();
-        JSONObject response= new JSONObject();
-        String requestType = request.getString("request");
+        JSONObject query = msg.getFormattedQuery();
+        JSONObject request = new JSONObject();
 
-        if (request.getString("request").equals("close")) {
+        JSONObject response= new JSONObject();
+        String requestType = "";
+        byte binary[] = null;
+
+        if (query.getString("dtype").equals("text")) {
+            request = Messenger.format(msg.getBodyUTF());
+            requestType = request.getString("request").trim();
+        } else if (msg.isJson()) {
+            request = new JSONObject(msg.getBodyUTF());
+            requestType = request.getString("request").trim();
+        } else if (query.getString("dtype").equals("binary")) {
+            binary = msg.getBodyBinary();
+            request = query;
+        }
+
+        if (requestType.equals("close")) {
             String password = request.getString("password");
             response.put("response", "success");
             msg.send("application/json", response.toString().getBytes());
@@ -145,7 +181,7 @@ public class RpcServer {
                         Wallet wallet = new Wallet(name, pass);
                         Context.getInstance().getDatabase().storeWallet(wallet);
                         response.put("content", wallet.toJson());
-                    } catch (WolkenException e) {
+                    } catch (AdeniumException e) {
                         response.put("response", "failed");
                         response.put("reason", e.getMessage());
                     }
@@ -166,7 +202,7 @@ public class RpcServer {
                 } else {
                     try {
                         wallet = wallet.encrypt(pass.getBytes());
-                    } catch (WolkenException e) {
+                    } catch (AdeniumException e) {
                         response.put("response", "failed");
                         response.put("reason", e.getMessage());
                     }
@@ -201,7 +237,7 @@ public class RpcServer {
                     response.put("content", wallet.toJson());
                     Context.getInstance().getDatabase().storeWallet(wallet);
                 }
-                catch (WolkenException e) {
+                catch (AdeniumException e) {
                     response.put("response", "failed");
                     response.put("reason", e.getMessage());
                 }
@@ -256,7 +292,7 @@ public class RpcServer {
                 } else {
                     response.put("response", "success");
                 }
-            } catch (WolkenException e) {
+            } catch (AdeniumException e) {
                 response.put("response", "failed");
                 response.put("reason", e.getMessage());
             }
@@ -272,7 +308,7 @@ public class RpcServer {
                     response.put("response", "success");
                     response.put("content", signed.toJson());
                 }
-            } catch (WolkenException e) {
+            } catch (AdeniumException e) {
                 response.put("response", "failed");
                 response.put("reason", e.getMessage());
             }
@@ -281,7 +317,7 @@ public class RpcServer {
 
             try {
                 Transaction tx          = Transaction.fromJson(transaction);
-                if (!tx.shallowVerify()) {
+                if (tx.checkTransaction() == Transaction.TransactionCode.InvalidTransaction) {
                     response.put("response", "failed");
                     response.put("reason", "invalid transaction.");
                 } else {
@@ -294,7 +330,7 @@ public class RpcServer {
                     response.put("response", "success");
                     response.put("content", "transaction broadcast to '" + Context.getInstance().getServer().getConnectedNodes().size() + "' peers.");
                 }
-            } catch (WolkenException e) {
+            } catch (AdeniumException e) {
                 response.put("response", "failed");
                 response.put("reason", e.getMessage());
             }
@@ -311,7 +347,7 @@ public class RpcServer {
                 if (Context.getInstance().getDatabase().checkTransactionExists(hash)) {
                     transaction = Context.getInstance().getDatabase().findTransaction(hash);
                 } else if (Context.getInstance().getTransactionPool().contains(hash)) {
-                    transaction = Context.getInstance().getTransactionPool().getTransaction(hash);
+                    transaction = Context.getInstance().getTransactionPool().getTransaction(hash).getTransaction();
                 }
 
                 if (transaction == null) {
@@ -322,25 +358,90 @@ public class RpcServer {
                     response.put("content", transaction.toJson());
                 }
             }
-        } else if (request.getString("request").equals("server")) {
-            response.put("response", "success");
-            Set<Node> nodes = Context.getInstance().getServer().getConnectedNodes();
-
-            if (request.has("connected") && request.getBoolean("connected")) {
-                response.put("numconnected", nodes.size());
-            }
-
-            if (request.has("nodes") && request.getBoolean("nodes")) {
-                JSONArray array = new JSONArray();
-                int counter = 0;
-                for (Node node : nodes) {
-                    array.put(counter ++, node.toJson());
+        } else if (requestType.equals("broadcastblock")) {
+            response.put("response", "failed");
+            response.put("reason", "this command is not yet implemented.");
+        } else if (requestType.equals("createnextblock")) {
+            try {
+                Transaction mint      = null;
+                BlockIndex blockIndex = Context.getInstance().getRPCServer().createNextBlock();
+                if (request.getBoolean("custom_mint")) {
+                    mint              = Transaction.fromJson(request.getJSONObject("mint"));
+                } else {
+                    String miner      = request.getString("miner");
+                    if (!Base58.isEncoded(miner)) {
+                        throw new AdeniumException("expected 'miner' to be base58 encoded.");
+                    }
+                    if (!Address.isValidAddress(Base58.decode(miner))) {
+                        throw new AdeniumException("expected 'miner' to be a valid address.");
+                    }
+                    String dmsg       = "";
+                    if (request.has("msg")) {
+                        dmsg          = request.getString("msg");
+                    }
+                    mint              = Transaction.newMintTransaction(dmsg, ChainMath.getReward(blockIndex.getHeight()), Address.fromFormatted(Base58.decode(miner)));
                 }
-                response.put("nodes", array);
+                blockIndex.getBlock().addTransaction(mint);
+                blockIndex.build();
+                response.put("response", "success");
+                BlockHeader header    = blockIndex.getBlock().getBlockHeader();
+                JSONObject jsonHeader = header.toJson();
+                jsonHeader.put("raw", Base16.encode(header.asByteArray()));
+                response.put("content", jsonHeader);
+            } catch (AdeniumException e) {
+                response.put("response", "failed");
+                response.put("reason", e.getMessage());
+            }
+        } else if (requestType.equals("submitnonce")) {
+            try {
+                System.out.println("started");
+                Context.getInstance().getRPCServer().submitNonce(Base16.decode(request.getString("nonce")));
+                response.put("response", "success");
+            } catch (Exception e) {
+                response.put("response", "failed");
+                response.put("reason", e.getMessage());
             }
         }
 
         msg.send("application/json", response.toString().getBytes());
+    }
+
+    private void submitNonce(byte[] nonce) throws AdeniumException {
+        mutex.lock();
+        try {
+            if (nextBlock == null) {
+                throw new AdeniumException("no block currently being mined.");
+            }
+
+            nextBlock.getBlock().setNonce(Utils.makeInt(nonce));
+
+            if (!nextBlock.getBlock().verifyProofOfWork()) {
+                Logger.alert("invalid block submitted ${i}.", nextBlock.getBlock().getNonce());
+//                System.out.println("submitted '" + Integer.toUnsignedLong(nextBlock.getBlock().getNonce()) + "'.");
+//                System.out.println(Arrays.toString(nextBlock.getBlock().getBlockHeader().asByteArray()));
+//                System.out.println(Base16.encode(nextBlock.getBlock().getBlockHeader().getHashCode()));
+                throw new AdeniumException("invalid proof of work.");
+            }
+
+            // create a candidate block
+            CandidateBlock candidateBlock = new MinedBlockCandidate(Context.getInstance(), nextBlock);
+
+            // suggest the block
+            Context.getInstance().getBlockChain().suggest(candidateBlock);
+            Logger.alert("work '${work}' submitted", Logger.Levels.AlertMessage, Base16.encode(nextBlock.calcHash()));
+        } finally {
+            mutex.unlock();
+        }
+    }
+
+    private BlockIndex createNextBlock() throws AdeniumException {
+        mutex.lock();
+        try {
+            nextBlock = Context.getInstance().getBlockChain().fork();
+            return nextBlock;
+        } finally {
+            mutex.unlock();
+        }
     }
 
     private byte[] getPassphrase() {
@@ -413,10 +514,10 @@ public class RpcServer {
     }
 
     public void stop() {
-        Logger.alert("stopping rpc server.");
+        Logger.alert("stopping rpc server.", Logger.Levels.AlertMessage);
         server.stop(0);
         executor.shutdownNow();
-        Logger.alert("rpc server stopped.");
+        Logger.alert("rpc server stopped.", Logger.Levels.AlertMessage);
     }
 
     private static void traversePath(String url) {

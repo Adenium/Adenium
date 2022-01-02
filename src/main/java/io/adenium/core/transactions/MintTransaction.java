@@ -4,6 +4,7 @@ import io.adenium.core.Address;
 import io.adenium.core.Block;
 import io.adenium.core.BlockStateChange;
 import io.adenium.core.Context;
+<<<<<<< HEAD:src/main/java/io/adenium/core/transactions/MintTransaction.java
 import io.adenium.core.events.DepositFeesEvent;
 import io.adenium.core.events.MintRewardEvent;
 import io.adenium.crypto.Signature;
@@ -15,6 +16,17 @@ import io.adenium.utils.ChainMath;
 import io.adenium.utils.VarInt;
 import org.json.JSONObject;
 import org.wolkenproject.core.*;
+=======
+import org.json.JSONObject;
+import io.adenium.core.events.MintRewardEvent;
+import io.adenium.crypto.Signature;
+import io.adenium.encoders.Base16;
+import io.adenium.encoders.Base58;
+import io.adenium.exceptions.AdeniumException;
+import io.adenium.serialization.SerializableI;
+import io.adenium.utils.ChainMath;
+import io.adenium.utils.VarInt;
+>>>>>>> 0.01a:src/main/java/org/wolkenproject/core/transactions/MintTransaction.java
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -38,6 +50,10 @@ public class MintTransaction extends Transaction {
         this.value      = value;
         this.recipient  = recipient;
         this.dump       = dump;
+    }
+
+    public void setFees(long fees) {
+        this.value += fees;
     }
 
     @Override
@@ -66,13 +82,13 @@ public class MintTransaction extends Transaction {
     }
 
     @Override
-    public boolean shallowVerify() {
+    public TransactionCode checkTransaction() {
         // this is not 100% necessary
-        return dump.length <= 8192;
+        return dump.length <= 1024 ? TransactionCode.ValidTransaction : TransactionCode.InvalidTransaction;
     }
 
     @Override
-    public Address getSender() throws WolkenException {
+    public Address getSender() throws AdeniumException {
         return null;
     }
 
@@ -92,25 +108,24 @@ public class MintTransaction extends Transaction {
     }
 
     @Override
-    public long calculateSize() {
-        return VarInt.sizeOfCompactUin32(getVersion(), false) + 20 + dump.length;
+    public int calculateSize() {
+        return VarInt.sizeOfCompactUin32(getVersion(), false) + 20 + VarInt.sizeOfCompactUin32(dump.length, false) + dump.length;
     }
 
     @Override
-    public boolean verify(Block block, int blockHeight, long fees) {
+    public boolean verify(BlockStateChange blockStateChange, Block block, int blockHeight, long fees) {
         return value == ( ChainMath.getReward(blockHeight) + block.getFees() );
     }
 
     @Override
-    public void getStateChange(Block block, int blockHeight, BlockStateChange stateChange) {
+    public void getStateChange(Block block, BlockStateChange stateChange) {
         stateChange.createAccountIfDoesNotExist(recipient);
         stateChange.addEvent(new MintRewardEvent(recipient, value));
-        stateChange.addEvent(new DepositFeesEvent(recipient, block.getFees()));
     }
 
     @Override
     public JSONObject toJson(boolean txEvt, boolean evHash) {
-        JSONObject txHeader = new JSONObject().put("transaction", getClass().getName()).put("version", getVersion());
+        JSONObject txHeader = new JSONObject().put("name", getClass().getName()).put("version", getVersion());
         txHeader.put("content", new JSONObject().put("value", value).put("recipient", Base58.encode(recipient))).put("dump", Base16.encode(dump));
         return txHeader;
     }
@@ -125,7 +140,7 @@ public class MintTransaction extends Transaction {
     }
 
     @Override
-    public void write(OutputStream stream) throws IOException, WolkenException {
+    public void write(OutputStream stream) throws IOException, AdeniumException {
         VarInt.writeCompactUInt64(value, false, stream);
         stream.write(recipient);
         VarInt.writeCompactUInt32(dump.length, false, stream);
@@ -135,18 +150,20 @@ public class MintTransaction extends Transaction {
     }
 
     @Override
-    public void read(InputStream stream) throws IOException, WolkenException {
+    public void read(InputStream stream) throws IOException, AdeniumException {
         value = VarInt.readCompactUInt64(false, stream);
         checkFullyRead(stream.read(recipient), Address.RawLength);
         int length = VarInt.readCompactUInt32(false, stream);
         if (length > 0) {
             dump = new byte[length];
             checkFullyRead(stream.read(dump), length);
+        } else {
+            dump = new byte[0];
         }
     }
 
     @Override
-    public <Type extends SerializableI> Type newInstance(Object... object) throws WolkenException {
+    public <Type extends SerializableI> Type newInstance(Object... object) throws AdeniumException {
         return (Type) new MintTransaction();
     }
 

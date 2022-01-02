@@ -1,8 +1,14 @@
 package io.adenium.network.messages;
 
+<<<<<<< HEAD:src/main/java/io/adenium/network/messages/ResponseMessage.java
 import io.adenium.exceptions.WolkenException;
 import io.adenium.network.Node;
 import io.adenium.network.Message;
+=======
+import io.adenium.exceptions.AdeniumException;
+import io.adenium.network.Message;
+import io.adenium.network.Node;
+>>>>>>> 0.01a:src/main/java/org/wolkenproject/network/messages/ResponseMessage.java
 import io.adenium.network.ResponseMetadata;
 import io.adenium.network.Server;
 
@@ -27,13 +33,13 @@ public abstract class ResponseMessage extends Message {
     public abstract void execute(Server server, Node node);
 
     @Override
-    public void writeHeader(OutputStream stream) throws IOException, WolkenException {
+    public void writeHeader(OutputStream stream) throws IOException, AdeniumException {
         super.writeHeader(stream);
         stream.write(requester);
     }
 
     @Override
-    public void readHeader(InputStream stream) throws IOException, WolkenException {
+    public void readHeader(InputStream stream) throws IOException, AdeniumException {
         super.readHeader(stream);
         stream.read(requester);
     }

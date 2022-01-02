@@ -3,13 +3,22 @@ package io.adenium.network.messages;
 import io.adenium.core.Block;
 import io.adenium.core.BlockIndex;
 import io.adenium.core.Context;
+<<<<<<< HEAD:src/main/java/io/adenium/network/messages/RequestBlocks.java
 import io.adenium.exceptions.WolkenException;
 import io.adenium.serialization.SerializableI;
+=======
+import io.adenium.exceptions.AdeniumException;
+>>>>>>> 0.01a:src/main/java/org/wolkenproject/network/messages/RequestBlocks.java
 import io.adenium.network.Message;
 import io.adenium.network.Node;
 import io.adenium.network.ResponseMetadata;
 import io.adenium.network.Server;
+<<<<<<< HEAD:src/main/java/io/adenium/network/messages/RequestBlocks.java
 import io.adenium.utils.Utils;
+=======
+import io.adenium.serialization.SerializableI;
+import io.adenium.utils.VarInt;
+>>>>>>> 0.01a:src/main/java/org/wolkenproject/network/messages/RequestBlocks.java
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -39,22 +48,22 @@ public class RequestBlocks extends Message {
 
     @Override
     public void executePayload(Server server, Node node) {
-        Set<BlockIndex> blocks = new LinkedHashSet<>();
+        Set<Block> blocks = new LinkedHashSet<>();
         for (byte[] hash : this.blocks) {
             BlockIndex block    = Context.getInstance().getDatabase().findBlock(hash);
 
             if (block != null) {
-                blocks.add(block);
+                blocks.add(block.getBlock());
             }
         }
 
         // send the blocks
-        node.sendMessage(new BlockList(Context.getInstance().getNetworkParameters().getVersion(), blocks, getUniqueMessageIdentifier()));
+        node.sendMessage(new BlockList(Context.getInstance().getContextParams().getVersion(), blocks, getUniqueMessageIdentifier()));
     }
 
     @Override
     public void writeContents(OutputStream stream) throws IOException {
-        Utils.writeInt(blocks.size(), stream);
+        VarInt.writeCompactUInt32(blocks.size(), false, stream);
         for (byte[] hash : blocks)
         {
             stream.write(hash);
@@ -63,10 +72,7 @@ public class RequestBlocks extends Message {
 
     @Override
     public void readContents(InputStream stream) throws IOException {
-        byte buffer[] = new byte[4];
-        stream.read(buffer);
-
-        int length = Utils.makeInt(buffer);
+        int length = VarInt.readCompactUInt32(false, stream);
 
         for (int i = 0; i < length; i ++)
         {
@@ -120,7 +126,7 @@ public class RequestBlocks extends Message {
     }
 
     @Override
-    public <Type extends SerializableI> Type newInstance(Object... object) throws WolkenException {
+    public <Type extends SerializableI> Type newInstance(Object... object) throws AdeniumException {
         return (Type) new RequestBlocks(getVersion(), blocks);
     }
 

@@ -1,5 +1,6 @@
 package io.adenium.core;
 
+<<<<<<< HEAD:src/main/java/io/adenium/core/BlockIndex.java
 import org.json.JSONArray;
 import org.json.JSONObject;
 import io.adenium.core.transactions.Transaction;
@@ -9,6 +10,17 @@ import io.adenium.serialization.SerializableI;
 import io.adenium.utils.ChainMath;
 import io.adenium.utils.HashUtil;
 import io.adenium.utils.Utils;
+=======
+import io.adenium.core.transactions.Transaction;
+import io.adenium.encoders.Base16;
+import io.adenium.exceptions.AdeniumException;
+import io.adenium.serialization.SerializableI;
+import io.adenium.utils.ChainMath;
+import io.adenium.utils.HashUtil;
+import io.adenium.utils.Utils;
+import org.json.JSONArray;
+import org.json.JSONObject;
+>>>>>>> 0.01a:src/main/java/org/wolkenproject/core/BlockIndex.java
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -34,6 +46,14 @@ public class BlockIndex extends SerializableI implements Comparable<BlockIndex> 
         this.sequenceId = 0;
     }
 
+    public BlockIndex(Block block, BlockMetadata metadata) {
+        this.block = block;
+        this.hash  = block.getHashCode();
+        this.chainWork = metadata.getPreviousChainWork();
+        this.height = metadata.getHeight();
+        this.sequenceId = 0;
+    }
+
     public void setSequenceId(long sequenceId) {
         this.sequenceId = sequenceId;
     }
@@ -42,21 +62,26 @@ public class BlockIndex extends SerializableI implements Comparable<BlockIndex> 
         return block;
     }
 
-    public BigInteger getChainWork() throws WolkenException {
+    public BigInteger getTotalChainWork() {
         return chainWork.add(block.getWork());
+    }
+
+    public BigInteger getPreviousChainWork() {
+        return chainWork;
     }
 
     public int getHeight() {
         return height;
     }
 
-    public BlockIndex generateNextBlock() throws WolkenException {
-        int bits                = ChainMath.calculateNewTarget(this);
-        return new BlockIndex(new Block(getHash(), bits), getChainWork(), height + 1);
+    public BlockIndex generateNextBlock() {
+        Block nextBlock         = new Block(getHash(), getBlock().getBits());
+        int bits                = ChainMath.calculateNewTarget(nextBlock.getBlockHeader(), height + 1);
+        return new BlockIndex(nextBlock, getTotalChainWork(), height + 1);
     }
 
     @Override
-    public void write(OutputStream stream) throws IOException, WolkenException {
+    public void write(OutputStream stream) throws IOException, AdeniumException {
         block.write(stream);
         byte chainWork[] = this.chainWork.toByteArray();
         stream.write(chainWork.length);
@@ -65,20 +90,24 @@ public class BlockIndex extends SerializableI implements Comparable<BlockIndex> 
     }
 
     @Override
-    public void read(InputStream stream) throws IOException, WolkenException {
+    public void read(InputStream stream) throws IOException, AdeniumException {
         block.read(stream);
         byte length = (byte) stream.read();
         byte chainWork[] = new byte[length];
-        stream.read(chainWork);
-        this.chainWork = new BigInteger(chainWork);
-        stream.read(chainWork, 0, 4);
-        height = Utils.makeInt(chainWork);
+        if (chainWork.length == 0) {
+            this.chainWork = BigInteger.ZERO;
+        } else {
+            stream.read(chainWork);
+            this.chainWork = new BigInteger(chainWork);
+        }
+
+        height = Utils.readInt(stream);
 
         hash = block.getHashCode();
     }
 
     @Override
-    public <Type extends SerializableI> Type newInstance(Object... object) throws WolkenException {
+    public <Type extends SerializableI> Type newInstance(Object... object) throws AdeniumException {
         return (Type) new BlockIndex();
     }
 
@@ -87,11 +116,11 @@ public class BlockIndex extends SerializableI implements Comparable<BlockIndex> 
         return Context.getInstance().getSerialFactory().getSerialNumber(BlockIndex.class);
     }
 
-    public void recalculateChainWork() throws WolkenException {
+    public void recalculateChainWork() throws AdeniumException {
         recalculateChainWork(this);
     }
 
-    public static void recalculateChainWork(BlockIndex index) throws WolkenException {
+    public static void recalculateChainWork(BlockIndex index) throws AdeniumException {
         while (index != null) {
             BlockIndex previous = index.previousBlock();
 
@@ -99,7 +128,7 @@ public class BlockIndex extends SerializableI implements Comparable<BlockIndex> 
             BigInteger newChainWork = oldChainWork;
 
             if (previous != null) {
-                newChainWork  = previous.getChainWork();
+                newChainWork  = previous.getTotalChainWork();
             } else {
                 newChainWork  = BigInteger.ZERO;
             }
@@ -111,7 +140,7 @@ public class BlockIndex extends SerializableI implements Comparable<BlockIndex> 
                 index.chainWork = newChainWork;
 
                 // save changes made to the block index
-                Context.getInstance().getDatabase().setBlockIndex(index.getHeight(), index);
+                Context.getInstance().getDatabase().storeBlock(index.getHeight(), index);
             }
 
             if (index.hasNext()) {
@@ -142,37 +171,33 @@ public class BlockIndex extends SerializableI implements Comparable<BlockIndex> 
 
     @Override
     public int compareTo(BlockIndex other) {
-        try {
-            int compare = getChainWork().compareTo(other.getChainWork());
+        int compare = getTotalChainWork().compareTo(other.getTotalChainWork());
 
-            if (compare > 0) {
-                return -1;
-            }
-
-            if (compare < 0) {
-                return 1;
-            }
-
-            if (getSequenceId() < other.getSequenceId()) {
-                return -1;
-            }
-
-            if (getSequenceId() > other.getSequenceId()) {
-                return 1;
-            }
-
-            if (getBlock().getTransactionCount() > other.getBlock().getTransactionCount()) {
-                return 1;
-            }
-
-            if (getBlock().getTransactionCount() < other.getBlock().getTransactionCount()) {
-                return -1;
-            }
-
+        if (compare > 0) {
             return -1;
-        } catch (WolkenException e) {
-            return 0;
         }
+
+        if (compare < 0) {
+            return 1;
+        }
+
+        if (getSequenceId() < other.getSequenceId()) {
+            return -1;
+        }
+
+        if (getSequenceId() > other.getSequenceId()) {
+            return 1;
+        }
+
+        if (getBlock().getTransactionCount() > other.getBlock().getTransactionCount()) {
+            return 1;
+        }
+
+        if (getBlock().getTransactionCount() < other.getBlock().getTransactionCount()) {
+            return -1;
+        }
+
+        return -1;
     }
 
     public long getSequenceId() {
@@ -181,16 +206,12 @@ public class BlockIndex extends SerializableI implements Comparable<BlockIndex> 
 
     @Override
     public String toString() {
-        try {
-            return "{" +
-                    "block=" + Base16.encode(block.getHashCode()) +
-                    ", chainWork=" + getChainWork() +
-                    ", height=" + height +
-                    ", sequenceId=" + sequenceId +
-                    '}';
-        } catch (WolkenException e) {
-            return "";
-        }
+        return "{" +
+                "block=" + Base16.encode(block.getHashCode()) +
+                ", chainWork=" + getTotalChainWork() +
+                ", height=" + height +
+                ", sequenceId=" + sequenceId +
+                '}';
     }
 
     // always use this method when available
@@ -204,16 +225,8 @@ public class BlockIndex extends SerializableI implements Comparable<BlockIndex> 
         return HashUtil.hash160(getHash());
     }
 
-    public boolean verify() {
-        try {
-            return block.verify(getHeight());
-        } catch (Exception e) {
-            return false;
-        }
-    }
-
     public BlockStateChangeResult getStateChange() {
-        return null;
+        return getBlock().getStateChange();
     }
 
     /**
@@ -257,5 +270,42 @@ public class BlockIndex extends SerializableI implements Comparable<BlockIndex> 
         }
 
         return block;
+    }
+
+    public void build() throws AdeniumException {
+        getBlock().build(getHeight());
+    }
+
+    public byte[] calcHash() {
+        hash = getBlock().getHashCode();
+        return hash;
+    }
+
+    public PrunedBlock getPruned() throws AdeniumException {
+        return getBlock().getPruned();
+    }
+
+    public BlockMetadata getMetadata() throws AdeniumException {
+        return new BlockMetadata(getBlock().getBlockHeader(), 0, getHeight(), getBlock().getTransactionCount(), getBlock().getEventCount(), getTotalValue(), getFees(), getPreviousChainWork());
+    }
+
+    private long getFees() {
+        return block.getFees();
+    }
+
+    private long getTotalValue() {
+        return block.getTotalValue();
+    }
+
+    public BlockHeader getHeader() {
+        return block.getBlockHeader();
+    }
+
+    public void applyStateChange() {
+        getStateChange().apply();
+    }
+
+    public void undoStateChange() {
+        getStateChange().undo();
     }
 }

@@ -2,11 +2,19 @@ package io.adenium.network.messages;
 
 import io.adenium.core.BlockHeader;
 import io.adenium.core.Context;
+<<<<<<< HEAD:src/main/java/io/adenium/network/messages/HeaderList.java
 import io.adenium.exceptions.WolkenException;
 import io.adenium.serialization.SerializableI;
 import io.adenium.network.Node;
 import io.adenium.network.Server;
 import io.adenium.utils.Utils;
+=======
+import io.adenium.exceptions.AdeniumException;
+import io.adenium.network.Node;
+import io.adenium.network.Server;
+import io.adenium.serialization.SerializableI;
+import io.adenium.utils.VarInt;
+>>>>>>> 0.01a:src/main/java/org/wolkenproject/network/messages/HeaderList.java
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -23,24 +31,22 @@ public class HeaderList extends ResponseMessage {
     }
 
     @Override
-    public void writeContents(OutputStream stream) throws IOException, WolkenException {
-        Utils.writeInt(headers.size(), stream);
+    public void writeContents(OutputStream stream) throws IOException, AdeniumException {
+        VarInt.writeCompactUInt32(headers.size(), false, stream);
         for (BlockHeader block : headers) {
             block.write(stream);
         }
     }
 
     @Override
-    public void readContents(InputStream stream) throws IOException, WolkenException {
-        byte buffer[] = new byte[4];
-        stream.read(buffer);
-        int length = Utils.makeInt(buffer);
+    public void readContents(InputStream stream) throws IOException, AdeniumException {
+        int length = VarInt.readCompactUInt32(false, stream);
 
         for (int i = 0; i < length; i++) {
             try {
                 BlockHeader header = Context.getInstance().getSerialFactory().fromStream(Context.getInstance().getSerialFactory().getSerialNumber(BlockHeader.class), stream);
                 headers.add(header);
-            } catch (WolkenException e) {
+            } catch (AdeniumException e) {
                 throw new IOException(e);
             }
         }
@@ -52,7 +58,7 @@ public class HeaderList extends ResponseMessage {
     }
 
     @Override
-    public <Type extends SerializableI> Type newInstance(Object... object) throws WolkenException {
+    public <Type extends SerializableI> Type newInstance(Object... object) throws AdeniumException {
         return (Type) new HeaderList(getVersion(), headers, getUniqueMessageIdentifier());
     }
 

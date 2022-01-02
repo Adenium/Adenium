@@ -1,6 +1,10 @@
 package io.adenium.network;
 
 import io.adenium.core.Context;
+<<<<<<< HEAD:src/main/java/io/adenium/network/IpAddressList.java
+=======
+import io.adenium.utils.ByteArray;
+>>>>>>> 0.01a:src/main/java/org/wolkenproject/network/IpAddressList.java
 import io.adenium.utils.FileService;
 
 import java.io.*;
@@ -9,8 +13,8 @@ import java.util.*;
 import java.util.concurrent.PriorityBlockingQueue;
 
 public class IpAddressList {
-    private Map<byte[], NetAddress> addresses;
-    private FileService             service;
+    private Map<ByteArray, NetAddress>  addresses;
+    private FileService                 service;
 
     public IpAddressList(FileService service)
     {
@@ -18,7 +22,7 @@ public class IpAddressList {
         {
             try {
                 ObjectInputStream stream = new ObjectInputStream(new FileInputStream(service.file()));
-                this.addresses = (Map<byte[], NetAddress>) stream.readObject();
+                this.addresses = (Map<ByteArray, NetAddress>) stream.readObject();
                 stream.close();
             } catch (IOException | ClassNotFoundException e) {
                 e.printStackTrace();
@@ -46,7 +50,7 @@ public class IpAddressList {
                 }
             }
 
-            node.sendMessage(new AddressList(Context.getInstance().getNetworkParameters().getVersion(), list));
+            node.sendMessage(new AddressList(Context.getInstance().getContextParams().getVersion(), list));
             if (++ sent == 1024) {
                 return;
             }
@@ -55,7 +59,7 @@ public class IpAddressList {
 
     public void addAddress(NetAddress address)
     {
-        addresses.put(address.getAddress().getAddress(), address);
+        addresses.put(ByteArray.wrap(address.getAddress().getAddress()), address);
     }
 
     public void removeAddress(NetAddress address)

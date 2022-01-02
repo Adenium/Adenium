@@ -1,10 +1,18 @@
 package io.adenium.network;
 
+<<<<<<< HEAD:src/main/java/io/adenium/network/VersionInformation.java
 import io.adenium.core.Context;
 import io.adenium.encoders.Base16;
 import io.adenium.exceptions.WolkenException;
 import io.adenium.serialization.SerializableI;
 import org.json.JSONObject;
+=======
+import io.adenium.encoders.Base16;
+import io.adenium.exceptions.AdeniumException;
+import io.adenium.serialization.SerializableI;
+import org.json.JSONObject;
+import io.adenium.core.Context;
+>>>>>>> 0.01a:src/main/java/org/wolkenproject/network/VersionInformation.java
 import io.adenium.utils.Utils;
 import io.adenium.utils.VarInt;
 
@@ -63,32 +71,24 @@ public class VersionInformation extends SerializableI {
     }
 
     @Override
-    public void read(InputStream stream) throws IOException, WolkenException {
-        byte buffer[] = new byte[8];
-
+    public void read(InputStream stream) throws IOException, AdeniumException {
         this.version = VarInt.readCompactUInt32(false, stream);
-
-        checkFullyRead(stream.read(buffer), 8);
-        this.services = Utils.makeLong(buffer);
-
-        checkFullyRead(stream.read(buffer), 8);
-        this.timestamp = Utils.makeLong(buffer);
+        this.services = Utils.readLong(stream);
+        this.timestamp = Utils.readLong(stream);
 
         sender      = Context.getInstance().getSerialFactory().fromStream(Context.getInstance().getSerialFactory().getSerialNumber(NetAddress.class), stream);
         receiver    = Context.getInstance().getSerialFactory().fromStream(Context.getInstance().getSerialFactory().getSerialNumber(NetAddress.class), stream);
 
-        checkFullyRead(stream.read(buffer, 0, 4), 4);
-        this.blockHeight = Utils.makeInt(buffer);
-
+        this.blockHeight = Utils.readInt(stream);
         checkFullyRead(stream.read(nonce), 20);
     }
 
     @Override
-    public <Type extends SerializableI> Type newInstance(Object... object) throws WolkenException {
+    public <Type extends SerializableI> Type newInstance(Object... object) throws AdeniumException {
         try {
             return (Type) new VersionInformation();
         } catch (UnknownHostException e) {
-            throw new WolkenException(e);
+            throw new AdeniumException(e);
         }
     }
 

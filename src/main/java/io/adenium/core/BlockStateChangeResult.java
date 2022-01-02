@@ -1,5 +1,10 @@
 package io.adenium.core;
 
+<<<<<<< HEAD:src/main/java/io/adenium/core/BlockStateChangeResult.java
+=======
+import io.adenium.encoders.Base16;
+import io.adenium.utils.Logger;
+>>>>>>> 0.01a:src/main/java/org/wolkenproject/core/BlockStateChangeResult.java
 import io.adenium.utils.Utils;
 
 import java.util.Iterator;
@@ -50,5 +55,21 @@ public class BlockStateChangeResult implements Iterable<Event> {
     @Override
     public Iterator<Event> iterator() {
         return transactionEvents.iterator();
+    }
+
+    public void apply() {
+        for (Event event : transactionEvents) {
+            event.apply();;
+        }
+
+        Logger.alert("state merged ${h}", Logger.Levels.AlertMessage, Base16.encode(merkleRoot));
+    }
+
+    public void undo() {
+        for (Event event : transactionEvents) {
+            event.undo();
+        }
+
+        Logger.alert("state reset ${h}", Logger.Levels.AlertMessage, Base16.encode(merkleRoot));
     }
 }

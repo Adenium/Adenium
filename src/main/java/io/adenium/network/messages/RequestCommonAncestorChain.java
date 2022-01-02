@@ -3,12 +3,20 @@ package io.adenium.network.messages;
 import io.adenium.core.Ancestors;
 import io.adenium.core.Block;
 import io.adenium.core.Context;
+<<<<<<< HEAD:src/main/java/io/adenium/network/messages/RequestCommonAncestorChain.java
 import io.adenium.exceptions.WolkenException;
 import io.adenium.serialization.SerializableI;
+=======
+import io.adenium.exceptions.AdeniumException;
+>>>>>>> 0.01a:src/main/java/org/wolkenproject/network/messages/RequestCommonAncestorChain.java
 import io.adenium.network.Message;
 import io.adenium.network.Node;
 import io.adenium.network.ResponseMetadata;
 import io.adenium.network.Server;
+<<<<<<< HEAD:src/main/java/io/adenium/network/messages/RequestCommonAncestorChain.java
+=======
+import io.adenium.serialization.SerializableI;
+>>>>>>> 0.01a:src/main/java/org/wolkenproject/network/messages/RequestCommonAncestorChain.java
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -28,12 +36,12 @@ public class RequestCommonAncestorChain extends Message {
     }
 
     @Override
-    public void writeContents(OutputStream stream) throws IOException, WolkenException {
+    public void writeContents(OutputStream stream) throws IOException, AdeniumException {
         ancestors.write(stream);
     }
 
     @Override
-    public void readContents(InputStream stream) throws IOException, WolkenException {
+    public void readContents(InputStream stream) throws IOException, AdeniumException {
         ancestors.read(stream);
     }
 
@@ -50,7 +58,7 @@ public class RequestCommonAncestorChain extends Message {
     }
 
     @Override
-    public <Type extends SerializableI> Type newInstance(Object... object) throws WolkenException {
+    public <Type extends SerializableI> Type newInstance(Object... object) throws AdeniumException {
         return (Type) new RequestCommonAncestorChain(0, new Ancestors(new byte[Block.UniqueIdentifierLength]));
     }
 

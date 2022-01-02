@@ -1,5 +1,6 @@
 package io.adenium.wallet;
 
+<<<<<<< HEAD:src/main/java/io/adenium/wallet/Wallet.java
 import io.adenium.core.Address;
 import io.adenium.crypto.ec.ECKeypair;
 import io.adenium.crypto.ec.ECPrivateKey;
@@ -7,11 +8,24 @@ import io.adenium.encoders.Base16;
 import io.adenium.encoders.Base58;
 import io.adenium.exceptions.WolkenException;
 import org.json.JSONObject;
+=======
+import io.adenium.crypto.ec.ECKeypair;
+import io.adenium.crypto.ec.ECPrivateKey;
+import io.adenium.crypto.ec.ECPublicKey;
+import io.adenium.encoders.Base16;
+import io.adenium.encoders.Base58;
+import io.adenium.exceptions.AdeniumException;
+import org.json.JSONObject;
+import io.adenium.core.Address;
+>>>>>>> 0.01a:src/main/java/org/wolkenproject/wallet/Wallet.java
 import io.adenium.crypto.AESResult;
 import io.adenium.crypto.CryptoUtil;
 import io.adenium.crypto.Key;
 import io.adenium.crypto.Keypair;
+<<<<<<< HEAD:src/main/java/io/adenium/wallet/Wallet.java
 import io.adenium.crypto.ec.ECPublicKey;
+=======
+>>>>>>> 0.01a:src/main/java/org/wolkenproject/wallet/Wallet.java
 import io.adenium.utils.Utils;
 
 import javax.crypto.BadPaddingException;
@@ -32,37 +46,37 @@ public class Wallet {
     private final Address address;
     private long          nonce;
 
-    public Wallet(String dump) throws WolkenException {
+    public Wallet(String dump) throws AdeniumException {
         JSONObject json = new JSONObject(dump);
         if (json.has("name")) {
-            throw new WolkenException("wallet requires the attribute 'name' to be present.");
+            throw new AdeniumException("wallet requires the attribute 'name' to be present.");
         }
         if (json.has("private")) {
-            throw new WolkenException("wallet requires the attribute 'private' to be present.");
+            throw new AdeniumException("wallet requires the attribute 'private' to be present.");
         }
         if (json.has("public")) {
-            throw new WolkenException("wallet requires the attribute 'public' to be present.");
+            throw new AdeniumException("wallet requires the attribute 'public' to be present.");
         }
         if (json.has("address")) {
-            throw new WolkenException("wallet requires the attribute 'address' to be present.");
+            throw new AdeniumException("wallet requires the attribute 'address' to be present.");
         }
         if (json.has("nonce")) {
-            throw new WolkenException("wallet requires the attribute 'nonce' to be present.");
+            throw new AdeniumException("wallet requires the attribute 'nonce' to be present.");
         }
         if (!Base16.isEncoded(json.getString("private"))) {
-            throw new WolkenException("wallet requires the attribute 'private' to be base16 encoded.");
+            throw new AdeniumException("wallet requires the attribute 'private' to be base16 encoded.");
         }
         if (!Base16.isEncoded(json.getString("public"))) {
-            throw new WolkenException("wallet requires the attribute 'public' to be base16 encoded.");
+            throw new AdeniumException("wallet requires the attribute 'public' to be base16 encoded.");
         }
         if (!Base16.isEncoded(json.getString("address"))) {
-            throw new WolkenException("wallet requires the attribute 'address' to be base16 encoded.");
+            throw new AdeniumException("wallet requires the attribute 'address' to be base16 encoded.");
         }
         if (!Address.isValidAddress(Base16.decode(json.getString("address")))) {
-            throw new WolkenException("wallet requires the attribute 'address' to be a valid address.");
+            throw new AdeniumException("wallet requires the attribute 'address' to be a valid address.");
         }
         if (!json.get("nonce").toString().matches("\\d+")) {
-            throw new WolkenException("wallet requires the attribute 'nonce' to be a valid unsigned integer.");
+            throw new AdeniumException("wallet requires the attribute 'nonce' to be a valid unsigned integer.");
         }
 
 
@@ -90,7 +104,7 @@ public class Wallet {
         this.nonce = nonce;
     }
 
-    public Wallet(String name, byte[] pass) throws WolkenException {
+    public Wallet(String name, byte[] pass) throws AdeniumException {
         this.name = name;
         byte salt[] = CryptoUtil.makeSalt();
         try {
@@ -107,11 +121,11 @@ public class Wallet {
             this.publicKey      = ECKeypair.publicKeyFromPrivate(privKey.asInteger());
             this.address        = Address.fromKey(publicKey);
         } catch (InvalidKeySpecException | InvalidKeyException | IllegalBlockSizeException | BadPaddingException | NoSuchAlgorithmException | NoSuchPaddingException | InvalidParameterSpecException e) {
-            throw new WolkenException(e);
+            throw new AdeniumException(e);
         }
     }
 
-    public Keypair getKeypairForSigning(byte pass[]) throws WolkenException {
+    public Keypair getKeypairForSigning(byte pass[]) throws AdeniumException {
         byte privateBytes[] = privateKey;
         if (pass != null) {
             char password[]     = Utils.makeChars(CryptoUtil.expand(pass, 48));
@@ -123,7 +137,7 @@ public class Wallet {
             try {
                 privateBytes = CryptoUtil.aesDecrypt(enc, CryptoUtil.generateSecretForAES(password, salt), iv);
             } catch (InvalidKeySpecException | InvalidAlgorithmParameterException | InvalidKeyException | IllegalBlockSizeException | BadPaddingException | NoSuchAlgorithmException | NoSuchPaddingException e) {
-                throw new WolkenException(e);
+                throw new AdeniumException(e);
             }
         }
 
@@ -173,7 +187,7 @@ public class Wallet {
         return getPrivateKey().length != 32;
     }
 
-    public static byte[] encrypt(byte pass[], byte key[]) throws WolkenException {
+    public static byte[] encrypt(byte pass[], byte key[]) throws AdeniumException {
         try {
             byte salt[]         = CryptoUtil.makeSalt();
             char password[]     = Utils.makeChars(CryptoUtil.expand(pass, 48));
@@ -182,17 +196,17 @@ public class Wallet {
 
             return Utils.concatenate(salt, result.getIv(), result.getEncryptionResult());
         } catch (Exception e) {
-            throw new WolkenException(e);
+            throw new AdeniumException(e);
         }
     }
 
-    public Wallet encrypt(byte[] pass) throws WolkenException {
+    public Wallet encrypt(byte[] pass) throws AdeniumException {
         return new Wallet(name, encrypt(pass, privateKey), publicKey, address, nonce);
     }
 
-    public Wallet changePassphrase(byte oldPass[], byte newPass[]) throws WolkenException {
+    public Wallet changePassphrase(byte oldPass[], byte newPass[]) throws AdeniumException {
         if (!isEncrypted()) {
-            throw new WolkenException("wallet '"+name+"' is not encrypted.");
+            throw new AdeniumException("wallet '"+name+"' is not encrypted.");
         }
 
         char password[]     = Utils.makeChars(CryptoUtil.expand(oldPass, 48));
@@ -205,12 +219,12 @@ public class Wallet {
             byte privateKey[] = CryptoUtil.aesDecrypt(enc, CryptoUtil.generateSecretForAES(password, salt), iv);
 
             if (!publicKey.equals(ECKeypair.publicKeyFromPrivate(new BigInteger(1, privateKey)))) {
-                throw new WolkenException("incorrect decryption key provided for wallet '" + name + "'.");
+                throw new AdeniumException("incorrect decryption key provided for wallet '" + name + "'.");
             }
 
             return new Wallet(name, encrypt(newPass, privateKey), publicKey, address, nonce);
         } catch (InvalidKeySpecException | InvalidAlgorithmParameterException | InvalidKeyException | IllegalBlockSizeException | BadPaddingException | NoSuchAlgorithmException | NoSuchPaddingException e) {
-            throw new WolkenException(e);
+            throw new AdeniumException(e);
         }
     }
 }

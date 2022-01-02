@@ -11,6 +11,10 @@ import io.adenium.crypto.CryptoLib;
 import io.adenium.crypto.Key;
 import io.adenium.crypto.Keypair;
 import io.adenium.crypto.Signature;
+<<<<<<< HEAD:src/main/java/io/adenium/crypto/ec/ECKeypair.java
+=======
+import io.adenium.exceptions.AdeniumException;
+>>>>>>> 0.01a:src/main/java/org/wolkenproject/crypto/ec/ECKeypair.java
 import io.adenium.utils.HashUtil;
 import io.adenium.utils.Utils;
 
@@ -18,7 +22,7 @@ import java.math.BigInteger;
 import java.util.Arrays;
 
 public class ECKeypair extends Keypair {
-    public ECKeypair(Key priv) throws WolkenException {
+    public ECKeypair(Key priv) throws AdeniumException {
         this(priv, publicKeyFromPrivate(priv.asInteger()));
     }
 
@@ -38,7 +42,7 @@ public class ECKeypair extends Keypair {
     }
 
     @Override
-    public Signature sign(byte[] message) throws WolkenException {
+    public Signature sign(byte[] message) throws AdeniumException {
         BigInteger publicKey = getPublicKey().asInteger();
         // hash with sha256d
         byte[] messageHash = HashUtil.sha256d(message);
@@ -56,10 +60,10 @@ public class ECKeypair extends Keypair {
         }
 
         if (recId == -1) {
-            throw new WolkenException("Could not construct a recoverable key.");
+            throw new AdeniumException("Could not construct a recoverable key.");
         }
 
-        int headerByte = recId + 27;
+        int headerByte = recId + 53;
 
         // 1 header + 32 bytes for R + 32 bytes for S
         byte[] r = toBytesPadded(sig.getR(), 32);
@@ -68,11 +72,11 @@ public class ECKeypair extends Keypair {
         return new RecoverableSignature((byte) headerByte, r, s);
     }
 
-    private byte[] toBytesPadded(BigInteger integer, int length) throws WolkenException {
+    private byte[] toBytesPadded(BigInteger integer, int length) throws AdeniumException {
         byte result[] = Utils.toBytesPadded(integer, length);
 
         if (result.length > length) {
-            throw new WolkenException("result is too big.");
+            throw new AdeniumException("result is too big.");
         }
 
         return result;

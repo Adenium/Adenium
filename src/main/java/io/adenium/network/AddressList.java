@@ -1,9 +1,16 @@
 package io.adenium.network;
 
+<<<<<<< HEAD:src/main/java/io/adenium/network/AddressList.java
 import io.adenium.core.Context;
 import io.adenium.exceptions.WolkenException;
 import io.adenium.serialization.SerializableI;
 import io.adenium.utils.Utils;
+=======
+import io.adenium.exceptions.AdeniumException;
+import io.adenium.serialization.SerializableI;
+import io.adenium.core.Context;
+import io.adenium.utils.VarInt;
+>>>>>>> 0.01a:src/main/java/org/wolkenproject/network/AddressList.java
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -27,18 +34,16 @@ public class AddressList extends Message {
     }
 
     @Override
-    public void writeContents(OutputStream stream) throws IOException, WolkenException {
-        Utils.writeInt(addresses.size(), stream);
+    public void writeContents(OutputStream stream) throws IOException, AdeniumException {
+        VarInt.writeCompactUInt32(addresses.size(), false, stream);
         for (NetAddress address : addresses) {
             address.write(stream);
         }
     }
 
     @Override
-    public void readContents(InputStream stream) throws IOException, WolkenException {
-        byte buffer[] = new byte[4];
-        stream.read(buffer);
-        int length = Utils.makeInt(buffer);
+    public void readContents(InputStream stream) throws IOException, AdeniumException {
+        int length = VarInt.readCompactUInt32(false, stream);
         for (int i = 0; i < length; i ++) {
             addresses.add(Context.getInstance().getSerialFactory().fromStream(NetAddress.class, stream));
         }
@@ -55,7 +60,7 @@ public class AddressList extends Message {
     }
 
     @Override
-    public <Type extends SerializableI> Type newInstance(Object... object) throws WolkenException {
+    public <Type extends SerializableI> Type newInstance(Object... object) throws AdeniumException {
         return (Type) new AddressList(0, new LinkedHashSet<>());
     }
 

@@ -1,5 +1,6 @@
 package io.adenium.core.transactions;
 
+<<<<<<< HEAD:src/main/java/io/adenium/core/transactions/BasicTransaction.java
 import io.adenium.core.Address;
 import io.adenium.core.Block;
 import io.adenium.core.BlockStateChange;
@@ -13,6 +14,17 @@ import io.adenium.crypto.ec.RecoverableSignature;
 import io.adenium.encoders.Base16;
 import io.adenium.encoders.Base58;
 import io.adenium.exceptions.WolkenException;
+=======
+import io.adenium.core.*;
+import io.adenium.crypto.ec.RecoverableSignature;
+import org.json.JSONObject;
+import io.adenium.core.events.DepositFundsEvent;
+import io.adenium.core.events.WithdrawFundsEvent;
+import io.adenium.crypto.Signature;
+import io.adenium.encoders.Base16;
+import io.adenium.encoders.Base58;
+import io.adenium.exceptions.AdeniumException;
+>>>>>>> 0.01a:src/main/java/org/wolkenproject/core/transactions/BasicTransaction.java
 import io.adenium.serialization.SerializableI;
 import io.adenium.utils.VarInt;
 
@@ -71,27 +83,7 @@ public class BasicTransaction extends Transaction {
     }
 
     @Override
-    public boolean shallowVerify() {
-        // a transfer of 0 with a fee of 0 is not allowed
-        try {
-            return
-                    getTransactionValue() >= 0 &&
-                            getTransactionFee() >= 0 &&
-                            //possible vulnerability with a+b!=0 using signed integers
-                            (getTransactionValue() + getTransactionFee()) > 0 &&
-                            (signature.getR().length == 32) &&
-                            (signature.getS().length == 32) &&
-                            getSender() != null &&
-                            (Context.getInstance().getDatabase().findAccount(getSender().getRaw()).getNonce() + 1) == nonce &&
-                            (Context.getInstance().getDatabase().findAccount(getSender().getRaw()).getBalance()) >= (value + fee);
-        } catch (WolkenException e) {
-        }
-
-        return false;
-    }
-
-    @Override
-    public Address getSender() throws WolkenException {
+    public Address getSender() throws AdeniumException {
         return Address.fromKey(signature.recover(asByteArray()));
     }
 
@@ -111,7 +103,7 @@ public class BasicTransaction extends Transaction {
     }
 
     @Override
-    public long calculateSize() {
+    public int calculateSize() {
         return VarInt.sizeOfCompactUin32(getVersion(), false) + 20 +
                 VarInt.sizeOfCompactUin64(value, false) +
                 VarInt.sizeOfCompactUin64(fee, false) +
@@ -120,12 +112,59 @@ public class BasicTransaction extends Transaction {
     }
 
     @Override
-    public boolean verify(Block block, int blockHeight, long fees) {
+    public TransactionCode checkTransaction() {
+        try {
+            Account account = Context.getInstance().getDatabase().findAccount(getSender().getRaw());
+            if (account == null) {
+                return TransactionCode.InvalidTransaction;
+            }
+
+            boolean valid =
+                            commonTransactionChecks(value, fee) &&
+                            // check signature data is sound.
+                            (signature.getR().length == 32) &&
+                            (signature.getS().length == 32) &&
+                            getSender() != null &&
+                            // check the account account and balance of sender.
+                            (account.getNonce()) < nonce &&
+                            (account.getBalance()) >= (value + fee);
+
+            if (!valid) {
+                return TransactionCode.InvalidTransaction;
+            }
+
+            if (isFutureNonce(account.getNonce(), nonce)) {
+                return TransactionCode.FutureTransaction;
+            }
+
+            return TransactionCode.ValidTransaction;
+        } catch (AdeniumException e) {
+            return TransactionCode.InvalidTransaction;
+        }
+    }
+
+    @Override
+    public boolean verify(BlockStateChange stateChange, Block block, int blockHeight, long fees) {
+        Address sender = null;
+        try {
+            sender = getSender();
+
+            long balance = stateChange.getAccountBalance(sender.getRaw(), true, true);
+
+            if (balance >= value + fees) {
+                stateChange.createAccountIfDoesNotExist(recipient);
+                stateChange.addEvent(new DepositFundsEvent(recipient, value));
+                stateChange.addEvent(new WithdrawFundsEvent(sender.getRaw(), value + fee));
+                return true;
+            }
+        } catch (AdeniumException e) {
+            e.printStackTrace();
+        }
         return false;
     }
 
     @Override
-    public void getStateChange(Block block, int blockHeight, BlockStateChange stateChange) throws WolkenException {
+    public void getStateChange(Block block, BlockStateChange stateChange) throws AdeniumException {
         Address sender = getSender();
         stateChange.createAccountIfDoesNotExist(recipient);
         stateChange.addEvent(new DepositFundsEvent(recipient, value));
@@ -134,18 +173,25 @@ public class BasicTransaction extends Transaction {
 
     @Override
     public JSONObject toJson(boolean txEvt, boolean evHash) {
-        JSONObject txHeader = new JSONObject().put("transaction", getClass().getName()).put("version", getVersion());
-        txHeader.put("content", new JSONObject().put("recipient", Base58.encode(recipient))).put("value", value).put("fee", fee).put("nonce", nonce).put("v", signature.getV()).put("r", Base16.encode(signature.getR())).put("s", Base16.encode(signature.getS()));
+        JSONObject txHeader = new JSONObject().put("name", getClass().getName()).put("version", getVersion());
+        txHeader.put("content", new JSONObject()
+                .put("recipient", Base58.encode(recipient)))
+                .put("value", value)
+                .put("fee", fee)
+                .put("nonce", nonce)
+                .put("v", signature.getV())
+                .put("r", Base16.encode(signature.getR()))
+                .put("s", Base16.encode(signature.getS()));
         return txHeader;
     }
 
     @Override
-    protected void setSignature(Signature signature) throws WolkenException {
+    protected void setSignature(Signature signature) throws AdeniumException {
         if (signature instanceof RecoverableSignature) {
             this.signature = (RecoverableSignature) signature;
         }
 
-        throw new WolkenException("invalid signature type '" + signature.getClass() + "'.");
+        throw new AdeniumException("invalid signature type '" + signature.getClass() + "'.");
     }
 
     @Override
@@ -154,7 +200,7 @@ public class BasicTransaction extends Transaction {
     }
 
     @Override
-    public void write(OutputStream stream) throws IOException, WolkenException {
+    public void write(OutputStream stream) throws IOException, AdeniumException {
         stream.write(recipient);
         VarInt.writeCompactUInt64(value, false, stream);
         VarInt.writeCompactUInt64(fee, false, stream);
@@ -163,7 +209,7 @@ public class BasicTransaction extends Transaction {
     }
 
     @Override
-    public void read(InputStream stream) throws IOException, WolkenException {
+    public void read(InputStream stream) throws IOException, AdeniumException {
         checkFullyRead(stream.read(recipient), 20);
         value   = VarInt.readCompactUInt64(false, stream);
         fee     = VarInt.readCompactUInt64(false, stream);
@@ -172,7 +218,7 @@ public class BasicTransaction extends Transaction {
     }
 
     @Override
-    public <Type extends SerializableI> Type newInstance(Object... object) throws WolkenException {
+    public <Type extends SerializableI> Type newInstance(Object... object) throws AdeniumException {
         return (Type) new BasicTransaction();
     }
 

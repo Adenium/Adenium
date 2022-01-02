@@ -1,11 +1,21 @@
 package io.adenium.network;
 
+<<<<<<< HEAD:src/main/java/io/adenium/network/Node.java
 import io.adenium.core.Context;
 import io.adenium.exceptions.WolkenException;
 import io.adenium.exceptions.WolkenTimeoutException;
 import io.adenium.network.messages.FailedToRespondMessage;
 import org.json.JSONObject;
 import io.adenium.utils.Utils;
+=======
+import io.adenium.exceptions.AdeniumException;
+import io.adenium.exceptions.AdeniumTimeoutException;
+import io.adenium.network.messages.FailedToRespondMessage;
+import io.adenium.utils.ByteArray;
+import io.adenium.utils.Utils;
+import org.json.JSONObject;
+import io.adenium.core.Context;
+>>>>>>> 0.01a:src/main/java/org/wolkenproject/network/Node.java
 
 import java.io.*;
 import java.net.InetAddress;
@@ -19,8 +29,8 @@ public class Node implements Runnable {
     private ReentrantLock                   mutex;
     private Queue<Message>                  messages;
     private Queue<byte[]>                   messageQueue;
-    private Map<byte[], ResponseMetadata>   expectedResponse;
-    private Map<byte[], Message>            respones;
+    private Map<ByteArray, ResponseMetadata>expectedResponse;
+    private Map<ByteArray, Message>         respones;
     private MessageCache                    messageCache;
     private long                            firstConnected;
     private int                             errors;
@@ -31,6 +41,7 @@ public class Node implements Runnable {
     private int                             receivedAddresses;
     private VersionInformation              versionMessage;
     private boolean                         isClosed;
+
 
 //    public Node(String ip, int port) throws IOException {
 //        this(new Socket(ip, port));
@@ -47,29 +58,28 @@ public class Node implements Runnable {
         this.currentMessageSize = -1;
         this.firstConnected = System.currentTimeMillis();
         this.respones       = Collections.synchronizedMap(new HashMap<>());
-        this.readBuffer     = new byte[Context.getInstance().getNetworkParameters().getBufferSize()];
+        this.readBuffer     = new byte[Context.getInstance().getContextParams().getBufferSize()];
         this.expectedResponse = new HashMap<>();
     }
 
     public void receiveResponse(Message message, byte origin[]) {
         mutex.lock();
         try{
-            respones.put(origin, message);
+            respones.put(ByteArray.wrap(origin), message);
         } finally {
             mutex.unlock();
         }
     }
 
-    public CheckedResponse getResponse(Message message, long timeOut) throws WolkenTimeoutException {
+    public CheckedResponse getResponse(Message message, long timeOut) throws AdeniumTimeoutException {
         boolean shouldWait = false;
         byte id[] = message.getUniqueMessageIdentifier();
 
         mutex.lock();
-        try{
-            if (messageCache.shouldSend(message))
-            {
+        try {
+            if (messageCache.shouldSend(message)) {
                 messages.add(message);
-                expectedResponse.put(id, message.getResponseMetadata());
+                expectedResponse.put(ByteArray.wrap(id), message.getResponseMetadata());
                 shouldWait = true;
             }
         } finally {
@@ -85,7 +95,7 @@ public class Node implements Runnable {
                 }
             }
 
-            throw new WolkenTimeoutException("timed out while waiting for response");
+            throw new AdeniumTimeoutException("timed out while waiting for response");
         }
 
         return null;
@@ -94,7 +104,7 @@ public class Node implements Runnable {
     private boolean hasResponse(byte[] uniqueMessageIdentifier) {
         mutex.lock();
         try{
-            return respones.containsKey(uniqueMessageIdentifier);
+            return respones.containsKey(ByteArray.wrap(uniqueMessageIdentifier));
         } finally {
             mutex.unlock();
         }
@@ -103,8 +113,8 @@ public class Node implements Runnable {
     private CheckedResponse getResponse(byte[] uniqueMessageIdentifier) {
         mutex.lock();
         try{
-            Message response            = respones.get(uniqueMessageIdentifier);
-            ResponseMetadata metadata   = expectedResponse.get(uniqueMessageIdentifier);
+            Message response            = respones.get(ByteArray.wrap(uniqueMessageIdentifier));
+            ResponseMetadata metadata   = expectedResponse.get(ByteArray.wrap(uniqueMessageIdentifier));
 
             // internal error, we may return null
             if (response == null) {
@@ -126,15 +136,15 @@ public class Node implements Runnable {
 
             // check that the response is appropriate
             if ((flags & ResponseMetadata.ValidationBits.SpamfulResponse) == ResponseMetadata.ValidationBits.SpamfulResponse) {
-                errors += Context.getInstance().getNetworkParameters().getMaxNetworkErrors();
-                messageCache.increaseSpamAverage(Context.getInstance().getNetworkParameters().getMessageSpamThreshold());
+                errors += Context.getInstance().getContextParams().getMaxNetworkErrors();
+                messageCache.increaseSpamAverage(Context.getInstance().getContextParams().getMessageSpamThreshold());
                 return null;
             }
 
             return new CheckedResponse(response, flags);
         } finally {
-            respones.remove(uniqueMessageIdentifier);
-            expectedResponse.remove(uniqueMessageIdentifier);
+            respones.remove(ByteArray.wrap(uniqueMessageIdentifier));
+            expectedResponse.remove(ByteArray.wrap(uniqueMessageIdentifier));
             mutex.unlock();
         }
     }
@@ -205,11 +215,11 @@ public class Node implements Runnable {
                     currentMessageSize = -1;
                 }
 
-                if (currentMessageSize > Context.getInstance().getNetworkParameters().getMaxMessageContentSize()) {
-                    errors += Context.getInstance().getNetworkParameters().getMaxNetworkErrors();
+                if (currentMessageSize > Context.getInstance().getContextParams().getMaxMessageLength()) {
+                    errors += Context.getInstance().getContextParams().getMaxNetworkErrors();
                     stream = null;
                     currentMessageSize = -1;
-                    throw new WolkenException("message content exceeds the maximum size allowed by the protocol.");
+                    throw new AdeniumException("message content exceeds the maximum size allowed by the protocol.");
                 }
             }
 
@@ -227,7 +237,7 @@ public class Node implements Runnable {
                 stream = null;
                 currentMessageSize = -1;
             }
-        } catch (WolkenException | IOException e) {
+        } catch (AdeniumException | IOException e) {
             e.printStackTrace();
             errors ++;
             if (stream != null) {
@@ -261,7 +271,7 @@ public class Node implements Runnable {
             inputStream.close();
 
             return checkSpam(message);
-        } catch (IOException | WolkenException e) {
+        } catch (IOException | AdeniumException e) {
             errors++;
             e.printStackTrace();
             return null;
@@ -274,7 +284,7 @@ public class Node implements Runnable {
         Caches the message and keeps track of how many times it was received.
      */
     private CachedMessage checkSpam(Message message) {
-        return new CachedMessage(message, messageCache.cacheReceivedMessage(message) >= Context.getInstance().getNetworkParameters().getMessageSpamThreshold());
+        return new CachedMessage(message, messageCache.cacheReceivedMessage(message) >= Context.getInstance().getContextParams().getMessageSpamThreshold());
     }
 
     /*
@@ -306,7 +316,7 @@ public class Node implements Runnable {
                 // notify the message that it was sent
                 message.onSend(this);
             }
-        } catch (IOException | WolkenException e) {
+        } catch (IOException | AdeniumException e) {
             e.printStackTrace();
         } finally {
             mutex.unlock();
@@ -381,7 +391,7 @@ public class Node implements Runnable {
         receivedAddresses ++;
 
         if (receivedAddresses > 1024) {
-            errors += Context.getInstance().getNetworkParameters().getMaxNetworkErrors();
+            errors += Context.getInstance().getContextParams().getMaxNetworkErrors();
         }
     }
 

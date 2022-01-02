@@ -3,6 +3,10 @@ package io.adenium;
 import io.adenium.core.Int256;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
+<<<<<<< HEAD:src/test/java/io/adenium/Int256Tests.java
+=======
+import io.adenium.core.Int256;
+>>>>>>> 0.01a:src/test/java/org/wolkenproject/Int256Tests.java
 import io.adenium.utils.Utils;
 
 import java.math.BigInteger;

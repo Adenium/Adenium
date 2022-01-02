@@ -1,6 +1,10 @@
 package io.adenium.network;
 
+<<<<<<< HEAD:src/main/java/io/adenium/network/Message.java
 import io.adenium.exceptions.WolkenException;
+=======
+import io.adenium.exceptions.AdeniumException;
+>>>>>>> 0.01a:src/main/java/org/wolkenproject/network/Message.java
 import io.adenium.serialization.SerializableI;
 import io.adenium.utils.HashUtil;
 import io.adenium.utils.Utils;
@@ -41,28 +45,25 @@ public abstract class Message extends SerializableI {
     public void onSend(Node node) {
     }
 
-    public void writeHeader(OutputStream stream) throws IOException, WolkenException {
+    public void writeHeader(OutputStream stream) throws IOException, AdeniumException {
         Utils.writeInt(version, stream);
         Utils.writeInt(flags, stream);
         stream.flush();
     }
 
-    public void readHeader(InputStream stream) throws IOException, WolkenException {
-        byte buffer[] = new byte[8];
-        stream.read(buffer, 0, 4);
-        version = Utils.makeInt(buffer);
-        stream.read(buffer, 4, 4);
-        flags = Utils.makeInt(buffer);
+    public void readHeader(InputStream stream) throws IOException, AdeniumException {
+        version = Utils.readInt(stream);
+        flags = Utils.readInt(stream);
     }
 
     @Override
-    public void write(OutputStream stream) throws IOException, WolkenException {
+    public void write(OutputStream stream) throws IOException, AdeniumException {
         writeHeader(stream);
         writeContents(stream);
     }
 
     @Override
-    public void read(InputStream stream) throws IOException, WolkenException {
+    public void read(InputStream stream) throws IOException, AdeniumException {
         readHeader(stream);
         readContents(stream);
     }
@@ -83,8 +84,8 @@ public abstract class Message extends SerializableI {
 //        return nonce;
 //    }
 
-    public abstract void writeContents(OutputStream stream) throws IOException, WolkenException;
-    public abstract void readContents(InputStream stream) throws IOException, WolkenException;
+    public abstract void writeContents(OutputStream stream) throws IOException, AdeniumException;
+    public abstract void readContents(InputStream stream) throws IOException, AdeniumException;
 
     public abstract <Type> Type getPayload();
     public abstract ResponseMetadata getResponseMetadata();

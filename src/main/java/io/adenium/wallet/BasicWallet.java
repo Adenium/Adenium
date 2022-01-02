@@ -2,11 +2,19 @@ package io.adenium.wallet;
 
 import io.adenium.crypto.ec.ECKeypair;
 import io.adenium.crypto.ec.ECPrivateKey;
+<<<<<<< HEAD:src/main/java/io/adenium/wallet/BasicWallet.java
 import io.adenium.exceptions.WolkenException;
 import io.adenium.crypto.AESResult;
 import io.adenium.crypto.CryptoUtil;
 import io.adenium.crypto.Key;
 import io.adenium.crypto.ec.ECPublicKey;
+=======
+import io.adenium.crypto.ec.ECPublicKey;
+import io.adenium.exceptions.AdeniumException;
+import io.adenium.crypto.AESResult;
+import io.adenium.crypto.CryptoUtil;
+import io.adenium.crypto.Key;
+>>>>>>> 0.01a:src/main/java/org/wolkenproject/wallet/BasicWallet.java
 import io.adenium.utils.FileService;
 import io.adenium.utils.HashUtil;
 import io.adenium.utils.Utils;
@@ -35,13 +43,13 @@ public class BasicWallet {
         this.nonce      = 0;
     }
 
-    public BasicWallet(FileService newFile) throws IOException, WolkenException {
+    public BasicWallet(FileService newFile) throws IOException, AdeniumException {
         InputStream stream = fileService.openFileInputStream();
         int version = VarInt.readCompactUInt32(false, stream);
         byte pub[]  = new byte[65];
         int read = stream.read(pub);
         if (read != pub.length) {
-            throw new WolkenException("could not read entire public key.");
+            throw new AdeniumException("could not read entire public key.");
         }
         byte nonceBytes[] = new byte[8];
         read = stream.read(nonceBytes);
@@ -63,7 +71,7 @@ public class BasicWallet {
             byte pub[]  = new byte[65];
             read = stream.read(pub);
             if (read != pub.length) {
-                throw new WolkenException("could not read entire public key.");
+                throw new AdeniumException("could not read entire public key.");
             }
             byte nonceBytes[] = new byte[8];
             read = stream.read(nonceBytes);
@@ -130,7 +138,7 @@ public class BasicWallet {
             OutputStream stream         = service.openFileOutputStream();
 
             // write a version number
-            Utils.writeInt(1, stream);
+            VarInt.writeCompactUInt32(1, false, stream);
             // does not need to be encrypted (65 bytes)
             stream.write(publicKey.getEncoded());
             // write the current nonce

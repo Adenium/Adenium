@@ -2,13 +2,22 @@ package io.adenium.network.messages;
 
 import io.adenium.core.Context;
 import io.adenium.core.transactions.Transaction;
+<<<<<<< HEAD:src/main/java/io/adenium/network/messages/RequestTransactions.java
 import io.adenium.exceptions.WolkenException;
 import io.adenium.serialization.SerializableI;
+=======
+import io.adenium.exceptions.AdeniumException;
+>>>>>>> 0.01a:src/main/java/org/wolkenproject/network/messages/RequestTransactions.java
 import io.adenium.network.Message;
 import io.adenium.network.Node;
 import io.adenium.network.ResponseMetadata;
 import io.adenium.network.Server;
+<<<<<<< HEAD:src/main/java/io/adenium/network/messages/RequestTransactions.java
 import io.adenium.utils.Utils;
+=======
+import io.adenium.serialization.SerializableI;
+import io.adenium.utils.VarInt;
+>>>>>>> 0.01a:src/main/java/org/wolkenproject/network/messages/RequestTransactions.java
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -30,7 +39,7 @@ public class RequestTransactions extends Message {
         Set<Transaction> transactions = new LinkedHashSet<>();
         for (byte[] txid : this.transactions)
         {
-            Transaction transaction = Context.getInstance().getTransactionPool().getTransaction(txid);
+            Transaction transaction = Context.getInstance().getTransactionPool().getTransaction(txid).getTransaction();
 
             if (transaction != null)
             {
@@ -39,12 +48,12 @@ public class RequestTransactions extends Message {
         }
 
         // send the transactions
-        node.sendMessage(new TransactionList(Context.getInstance().getNetworkParameters().getVersion(), transactions, getUniqueMessageIdentifier()));
+        node.sendMessage(new TransactionList(Context.getInstance().getContextParams().getVersion(), transactions, getUniqueMessageIdentifier()));
     }
 
     @Override
     public void writeContents(OutputStream stream) throws IOException {
-        Utils.writeInt(transactions.size(), stream);
+        VarInt.writeCompactUInt32(transactions.size(), false, stream);
         for (byte[] txid : transactions)
         {
             stream.write(txid);
@@ -53,10 +62,7 @@ public class RequestTransactions extends Message {
 
     @Override
     public void readContents(InputStream stream) throws IOException {
-        byte buffer[] = new byte[4];
-        stream.read(buffer);
-
-        int length = Utils.makeInt(buffer);
+        int length = VarInt.readCompactUInt32(false, stream);
 
         for (int i = 0; i < length; i ++)
         {
@@ -73,7 +79,7 @@ public class RequestTransactions extends Message {
     }
 
     @Override
-    public <Type extends SerializableI> Type newInstance(Object... object) throws WolkenException {
+    public <Type extends SerializableI> Type newInstance(Object... object) throws AdeniumException {
         return (Type) new RequestTransactions(getVersion(), transactions);
     }
 

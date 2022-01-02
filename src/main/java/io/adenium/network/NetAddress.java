@@ -1,10 +1,19 @@
 package io.adenium.network;
 
+<<<<<<< HEAD:src/main/java/io/adenium/network/NetAddress.java
 import io.adenium.core.Context;
 import io.adenium.exceptions.WolkenException;
 import io.adenium.serialization.SerializableI;
 import org.json.JSONObject;
 import io.adenium.utils.Utils;
+=======
+import io.adenium.exceptions.AdeniumException;
+import io.adenium.serialization.SerializableI;
+import org.json.JSONObject;
+import io.adenium.core.Context;
+import io.adenium.utils.Utils;
+import io.adenium.utils.VarInt;
+>>>>>>> 0.01a:src/main/java/org/wolkenproject/network/NetAddress.java
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -72,7 +81,7 @@ public class NetAddress extends SerializableI implements Serializable, Comparabl
         byte[] bytes = address.getAddress();
         stream.write(bytes.length);
         stream.write(bytes);
-        Utils.writeUnsignedInt16(port, stream);
+        VarInt.writeCompactUInt32(port, false, stream);
         Utils.writeLong(services, stream);
     }
 
@@ -82,19 +91,16 @@ public class NetAddress extends SerializableI implements Serializable, Comparabl
         byte[] bytes = new byte[length];
         checkFullyRead(stream.read(bytes), length);
         address = InetAddress.getByAddress(bytes);
-        port    = Utils.makeInt((byte) 0, (byte) 0, (byte) stream.read(), (byte) stream.read());
-
-        byte[] buffer = new byte[8];
-        checkFullyRead(stream.read(buffer), 8);
-        services= Utils.makeLong(bytes);
+        port    = VarInt.readCompactUInt32(false, stream);
+        services= Utils.readLong(stream);
     }
 
     @Override
-    public <Type extends SerializableI> Type newInstance(Object... object) throws WolkenException {
+    public <Type extends SerializableI> Type newInstance(Object... object) throws AdeniumException {
         try {
             return (Type) new NetAddress(InetAddress.getLocalHost(), port, 0);
         } catch (UnknownHostException e) {
-            throw new WolkenException(e);
+            throw new AdeniumException(e);
         }
     }
 

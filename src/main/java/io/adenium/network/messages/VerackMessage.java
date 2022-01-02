@@ -1,10 +1,16 @@
 package io.adenium.network.messages;
 
 import io.adenium.core.Context;
+<<<<<<< HEAD:src/main/java/io/adenium/network/messages/VerackMessage.java
 import io.adenium.exceptions.WolkenException;
 import io.adenium.network.*;
 import io.adenium.serialization.SerializableI;
 import org.wolkenproject.network.*;
+=======
+import io.adenium.exceptions.AdeniumException;
+import io.adenium.network.*;
+import io.adenium.serialization.SerializableI;
+>>>>>>> 0.01a:src/main/java/org/wolkenproject/network/messages/VerackMessage.java
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -28,16 +34,16 @@ public class VerackMessage extends Message {
         node.setVersionInfo(versionInformation);
         Context.getInstance().getIpAddressList().send(node);
 
-        node.sendMessage(new RequestInv(Context.getInstance().getNetworkParameters().getVersion()));
+        node.sendMessage(new RequestInv(Context.getInstance().getContextParams().getVersion()));
     }
 
     @Override
-    public void writeContents(OutputStream stream) throws IOException, WolkenException {
+    public void writeContents(OutputStream stream) throws IOException, AdeniumException {
         versionInformation.write(stream);
     }
 
     @Override
-    public void readContents(InputStream stream) throws IOException, WolkenException {
+    public void readContents(InputStream stream) throws IOException, AdeniumException {
         versionInformation.read(stream);
     }
 
@@ -52,7 +58,7 @@ public class VerackMessage extends Message {
     }
 
     @Override
-    public <Type extends SerializableI> Type newInstance(Object... object) throws WolkenException {
+    public <Type extends SerializableI> Type newInstance(Object... object) throws AdeniumException {
         try {
             return (Type) new VerackMessage(0, new VersionInformation());
         } catch (UnknownHostException e) {

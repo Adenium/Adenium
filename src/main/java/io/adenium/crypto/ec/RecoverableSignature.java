@@ -11,9 +11,18 @@ import org.bouncycastle.crypto.params.ECPublicKeyParameters;
 import org.bouncycastle.crypto.signers.ECDSASigner;
 import org.bouncycastle.crypto.signers.HMacDSAKCalculator;
 import org.bouncycastle.math.ec.ECPoint;
+<<<<<<< HEAD:src/main/java/io/adenium/crypto/ec/RecoverableSignature.java
 import io.adenium.crypto.CryptoLib;
 import io.adenium.crypto.Key;
 import io.adenium.crypto.Signature;
+=======
+import io.adenium.core.Context;
+import io.adenium.crypto.CryptoLib;
+import io.adenium.crypto.Key;
+import io.adenium.crypto.Signature;
+import io.adenium.exceptions.AdeniumException;
+import io.adenium.serialization.SerializableI;
+>>>>>>> 0.01a:src/main/java/org/wolkenproject/crypto/ec/RecoverableSignature.java
 import io.adenium.utils.Assertions;
 import io.adenium.utils.HashUtil;
 
@@ -31,8 +40,8 @@ public class RecoverableSignature extends Signature {
         this((byte) 0, new byte[32], new byte[32]);
     }
 
-    public RecoverableSignature(byte v, byte[] r, byte[] s) {
-        this.v = new byte[] { v };
+    public RecoverableSignature(int v, byte[] r, byte[] s) {
+        this.v = new byte[] {(byte) v};
         this.r = r;
         this.s = s;
     }
@@ -50,21 +59,21 @@ public class RecoverableSignature extends Signature {
     }
 
     @Override
-    public void write(OutputStream stream) throws IOException, WolkenException {
+    public void write(OutputStream stream) throws IOException, AdeniumException {
         stream.write(v);
         stream.write(r);
         stream.write(s);
     }
 
     @Override
-    public void read(InputStream stream) throws IOException, WolkenException {
+    public void read(InputStream stream) throws IOException, AdeniumException {
         checkFullyRead(stream.read(v), 1);
         checkFullyRead(stream.read(r), 32);
         checkFullyRead(stream.read(s), 32);
     }
 
     @Override
-    public <Type extends SerializableI> Type newInstance(Object... object) throws WolkenException {
+    public <Type extends SerializableI> Type newInstance(Object... object) throws AdeniumException {
         return (Type) new RecoverableSignature();
     }
 
@@ -87,21 +96,21 @@ public class RecoverableSignature extends Signature {
     }
 
     @Override
-    public Key recover(byte originalMessage[]) throws WolkenException {
+    public Key recover(byte originalMessage[]) throws AdeniumException {
         Assertions.assertTrue(r != null && r.length == 32, "r must be 32 bytes in length");
         Assertions.assertTrue(s != null && s.length == 32, "s must be 32 bytes in length");
 
-        int header = v[0] & 0xFF;
+        int header = Byte.toUnsignedInt(v[0]) & 0xFF;
 
-        if (header < 27 || header > 34) {
-            throw new WolkenException("header byte out of range: " + header);
+        if (header < 53 || header > 128) {
+            throw new AdeniumException("header byte out of range: " + header);
         }
 
         ECSig sig = new ECSig(new BigInteger(1, r), new BigInteger(1, s));
-        Key result = CryptoLib.recoverFromSignature(v[0] - 27, sig, HashUtil.sha256d(originalMessage));
+        Key result = CryptoLib.recoverFromSignature(v[0] - 53, sig, HashUtil.sha256d(originalMessage));
 
         if (result == null) {
-            throw new WolkenException("could not recover public key.");
+            throw new AdeniumException("could not recover public key.");
         }
 
         return result;

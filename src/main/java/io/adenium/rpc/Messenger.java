@@ -2,8 +2,12 @@ package io.adenium.rpc;
 
 import com.sun.net.httpserver.Headers;
 import com.sun.net.httpserver.HttpExchange;
-import org.json.JSONObject;
 import io.adenium.core.Context;
+import org.json.JSONObject;
+<<<<<<< HEAD:src/main/java/io/adenium/rpc/Messenger.java
+import io.adenium.core.Context;
+=======
+>>>>>>> 0.01a:src/main/java/org/wolkenproject/rpc/Messenger.java
 
 import java.io.*;
 import java.util.HashMap;
@@ -105,7 +109,11 @@ public class Messenger {
     }
 
     public JSONObject getFormattedQuery() {
-        String requests[] = getQuery().split("&");
+        return format(getQuery());
+    }
+
+    public static JSONObject format(String query) {
+        String requests[] = query.split("&");
         JSONObject request = new JSONObject();
         for (int i = 0; i < requests.length; i ++) {
             String kv[] = requests[i].split("=");
@@ -143,5 +151,36 @@ public class Messenger {
 
         reader.close();
         return builder.toString();
+    }
+
+    public String getBodyUTF() throws IOException {
+        return readUTF(exchange.getRequestBody());
+    }
+
+    public boolean isBinary() {
+        return exchange.getRequestHeaders().get("Content-Type").get(0).equals("application/octet-stream");
+    }
+
+    public boolean isJson() {
+        return exchange.getRequestHeaders().get("Content-Type").get(0).equals("application/json");
+    }
+
+    public byte[] getBodyBinary() throws IOException {
+        byte buffer[] = new byte[1024];
+        int read = 0;
+
+        ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+
+        while ( (exchange.getRequestBody().read(buffer)) > 0 ) {
+            outputStream.write(buffer, 0, read);
+        }
+
+        // this isn't necessary as of this moment.
+        outputStream.close();
+        return outputStream.toByteArray();
+    }
+
+    public String getContentType() {
+        return exchange.getRequestHeaders().get("Content-Type").get(0);
     }
 }
