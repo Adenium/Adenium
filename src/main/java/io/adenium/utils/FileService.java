@@ -214,4 +214,8 @@ public class FileService {
     public FileReader openFileReader() throws FileNotFoundException {
         return new FileReader(file());
     }
+
+    public RandomAccessFile randomAccess() throws FileNotFoundException {
+        return new RandomAccessFile(file(), "rw");
+    }
 }

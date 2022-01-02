@@ -1,6 +1,6 @@
 package io.adenium.exceptions;
 
-public class UndefClassException extends MochaException {
+public class UndefClassException extends PapayaException {
     public UndefClassException(String msg) {
         super(msg);
     }

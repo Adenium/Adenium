@@ -1,6 +1,6 @@
 package io.adenium.exceptions;
 
-public class InvalidOpcodeException extends MochaException {
+public class InvalidOpcodeException extends PapayaException {
     public InvalidOpcodeException(String msg) {
         super(msg);
     }

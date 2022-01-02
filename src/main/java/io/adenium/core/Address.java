@@ -12,7 +12,7 @@ public class Address {
     private byte[]  checksum;
 
     private Address(byte raw[]) {
-        this(Context.getInstance().getNetworkParameters().getGenericAddressPrefix(), raw);
+        this(Context.getInstance().getContextParams().getGenericAddressPrefix(), raw);
     }
 
     private Address(byte prefix, byte raw[]) {
@@ -24,9 +24,12 @@ public class Address {
         this.raw        = raw;
         this.checksum   = checksum;
     }
+    public static Address fromKey(Key key) {
+        return fromKey(Context.getInstance().getContextParams().getGenericAddressPrefix(), key);
+    }
 
     // return an address object from a key
-    public static Address fromKey(Key key) {
+    public static Address fromKey(int prefix, Key key) {
         if (key == null) {
             return null;
         }
@@ -35,8 +38,9 @@ public class Address {
         byte encodedKey[]   = key.getEncoded();
 
         // return a hash160 of the key (with a network 'address' prefix)
-        return new Address(Context.getInstance().getNetworkParameters().getGenericAddressPrefix(), HashUtil.hash160(encodedKey));
+        return new Address((byte) prefix, HashUtil.hash160(encodedKey));
     }
+
 
     // return an address object from a 'raw' non-encoded 20 byte address
     public static Address fromRaw(byte[] rawBytes) {
@@ -58,7 +62,7 @@ public class Address {
 
         byte prefixed[] = Utils.trim(address, 0, 21);
 
-        if (prefixed[0] != Context.getInstance().getNetworkParameters().getGenericMainnetAddressPrefix() && prefixed[0] != Context.getInstance().getNetworkParameters().getGenericTestnetAddressPrefix()) {
+        if (prefixed[0] != Context.getInstance().getContextParams().getGenericMainnetAddressPrefix() && prefixed[0] != Context.getInstance().getContextParams().getGenericTestnetAddressPrefix()) {
             return false;
         }
 
@@ -71,9 +75,7 @@ public class Address {
 
     @Override
     public String toString() {
-        return "Address{" +
-                "raw=" + Base58.encode(raw) +
-                '}';
+        return Base58.encode(getFormatted());
     }
 
     public byte[] getFormatted() {

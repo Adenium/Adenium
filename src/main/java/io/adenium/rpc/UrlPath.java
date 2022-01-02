@@ -5,7 +5,7 @@ import io.adenium.utils.VoidCallable;
 public class UrlPath {
     private String                      path;
     private UrlPath[]                   paths;
-    private VoidCallable<Messenger>     onGET;
+    private VoidCallable<Messenger> onGET;
 
     public UrlPath(String path, VoidCallable<Messenger> onGET, UrlPath paths[]) {
         this.path   = path;
