@@ -1,9 +1,9 @@
-package org.wolkenproject;
+package io.adenium;
 
+import io.adenium.core.Int256;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
-import org.wolkenproject.core.Int256;
-import org.wolkenproject.utils.Utils;
+import io.adenium.utils.Utils;
 
 import java.math.BigInteger;
 

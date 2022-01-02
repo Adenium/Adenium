@@ -1,10 +1,10 @@
-package org.wolkenproject;
+package io.adenium;
 
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
-import org.wolkenproject.utils.BitInputStream;
-import org.wolkenproject.utils.BitOutputStream;
-import org.wolkenproject.utils.Utils;
+import io.adenium.utils.BitInputStream;
+import io.adenium.utils.BitOutputStream;
+import io.adenium.utils.Utils;
 
 import java.io.IOException;
 

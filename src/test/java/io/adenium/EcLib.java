@@ -1,10 +1,10 @@
-package org.wolkenproject;
+package io.adenium;
 
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
-import org.wolkenproject.crypto.Keypair;
-import org.wolkenproject.crypto.Signature;
-import org.wolkenproject.exceptions.WolkenException;
+import io.adenium.crypto.Keypair;
+import io.adenium.crypto.Signature;
+import io.adenium.exceptions.WolkenException;
 
 import java.security.SecureRandom;
 

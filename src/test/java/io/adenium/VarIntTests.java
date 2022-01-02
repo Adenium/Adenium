@@ -1,9 +1,9 @@
-package org.wolkenproject;
+package io.adenium;
 
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
-import org.wolkenproject.utils.Utils;
-import org.wolkenproject.utils.VarInt;
+import io.adenium.utils.Utils;
+import io.adenium.utils.VarInt;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
