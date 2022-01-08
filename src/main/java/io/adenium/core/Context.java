@@ -167,6 +167,11 @@ public class Context {
         return (timeMs + (averageTime / medianTime.size()));
     }
 
+    /*
+        Adds the time-difference to the timestamp list;
+            Allows the node to create averaged timestamps.
+        Returns true if the timestamp is valid.
+     */
     public boolean addTimeStamp(NetworkTimestamp timestamp)
     {
         if (timestamp.getDifference() > getContextParams().getMaxTimeDifferenceBetweenNodes() || timestamp.getDifference() < -getContextParams().getMaxTimeDifferenceBetweenNodes()) {

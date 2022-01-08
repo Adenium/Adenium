@@ -1,6 +1,7 @@
 package io.adenium.network;
 
 import io.adenium.exceptions.AdeniumTimeoutException;
+import io.adenium.network.messages.CheckoutMessage;
 import io.adenium.network.messages.VersionMessage;
 import io.adenium.core.Context;
 import io.adenium.utils.Logger;
@@ -17,10 +18,12 @@ import static io.adenium.utils.Logger.Levels.*;
 public class Server implements Runnable {
     private ServerSocket    socket;
     private Set<Node>       connectedNodes;
+    private Set<Node>       disconnections;
     private NetAddress      netAddress;
     private ReentrantLock   mutex;
     private byte            nonce[];
     private long            upSince;
+    private Map<Node, Long> timestamps;
 
     public Server(Set<NetAddress> forceConnections) throws IOException {
         socket  = new ServerSocket();
@@ -28,6 +31,7 @@ public class Server implements Runnable {
         upSince = System.currentTimeMillis();
         mutex   = new ReentrantLock();
         nonce   = new byte[20];
+        timestamps = new HashMap<>();
 
         // generate a nonce to know when we self connect
         new SecureRandom().nextBytes(nonce);
@@ -45,6 +49,7 @@ public class Server implements Runnable {
         Logger.alert("opened port '${port}' on '${address}'", AlertMessage, Context.getInstance().getContextParams().getPort(), netAddress.getAddress());
 
         connectedNodes = Collections.synchronizedSet(new LinkedHashSet<>());
+        disconnections = Collections.synchronizedSet(new LinkedHashSet<>());
         connectToNodes(forceConnections, Context.getInstance().getIpAddressList().getAddresses());
     }
 
@@ -96,16 +101,20 @@ public class Server implements Runnable {
                 mutex.unlock();
             }
 
+            long timestamp = 0L;
+
             node.sendMessage(new VersionMessage(
                     Context.getInstance().getContextParams().getVersion(),
                     new VersionInformation(
                             Context.getInstance().getContextParams().getVersion(),
                             VersionInformation.Flags.AllServices,
-                            System.currentTimeMillis(),
+                            timestamp = System.currentTimeMillis(),
                             getNetAddress(),
                             address,
                             Context.getInstance().getBlockChain().getHeight(),
                             nonce)));
+
+            timestamps.put(node, timestamp);
         } catch (IOException e) {
         }
     }
@@ -222,6 +231,10 @@ public class Server implements Runnable {
                     isSpammy = true;
                 }
 
+                if (disconnections.contains(node)) {
+                    shouldDisconnect = true;
+                }
+
                 if (isSpammy) {
                     NetAddress address = Context.getInstance().getIpAddressList().getAddress(node.getInetAddress());
                     if (address != null) {
@@ -250,6 +263,8 @@ public class Server implements Runnable {
                     node.getMessageCache().clearOutboundCache();
                 }
             }
+
+            disconnections.clear();
         } finally {
             mutex.unlock();
         }
@@ -327,5 +342,30 @@ public class Server implements Runnable {
 
     public byte[] getNonce() {
         return nonce;
+    }
+
+    public Long getTimestamp(Node node) {
+        if (timestamps.containsKey(node)) {
+            Long timestamp = timestamps.get(node);
+            timestamps.remove(node);
+
+            return timestamp;
+        }
+
+        return null;
+    }
+
+    public void disconnect(Node node, int reason) {
+        if (reason >= 0) {
+            Message message = new CheckoutMessage(reason);
+            node.sendMessage(message);
+        }
+
+        mutex.lock();
+        try {
+            disconnections.add(node);
+        } finally {
+            mutex.unlock();
+        }
     }
 }

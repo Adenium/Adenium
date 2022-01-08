@@ -18,7 +18,8 @@ public class CheckoutMessage extends Message {
     public static final class Reason {
         public static final int
             None = 0,
-            SelfConnect = 1;
+            SelfConnect = 1,
+            UNSYNCRONIZED_CLOCK = 2;
     }
 
     private int reason;

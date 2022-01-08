@@ -4,6 +4,7 @@ import io.adenium.core.Context;
 import io.adenium.exceptions.AdeniumException;
 import io.adenium.network.*;
 import io.adenium.serialization.SerializableI;
+import io.adenium.utils.NetworkTimestamp;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -26,8 +27,18 @@ public class VerackMessage extends Message {
     public void executePayload(Server server, Node node) {
         node.setVersionInfo(versionInformation);
         Context.getInstance().getIpAddressList().send(node);
+        Long ts = server.getTimestamp(node);
+        long timestamp = System.currentTimeMillis();
 
-        node.sendMessage(new RequestInv(Context.getInstance().getContextParams().getVersion()));
+        if (ts != null) {
+            timestamp = ts;
+        }
+
+        if (Context.getInstance().addTimeStamp(new NetworkTimestamp(timestamp, versionInformation.getTimestamp()))) {
+            node.sendMessage(new RequestInv(Context.getInstance().getContextParams().getVersion()));
+        } else {
+            server.disconnect(node, CheckoutMessage.Reason.UNSYNCRONIZED_CLOCK);
+        }
     }
 
     @Override

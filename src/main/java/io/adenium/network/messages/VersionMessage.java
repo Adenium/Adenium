@@ -5,6 +5,7 @@ import io.adenium.exceptions.AdeniumException;
 import io.adenium.network.*;
 import io.adenium.serialization.SerializableI;
 import io.adenium.utils.Logger;
+import io.adenium.utils.NetworkTimestamp;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -28,8 +29,11 @@ public class VersionMessage extends Message {
     public void executePayload(Server server, Node node) {
         node.setVersionInfo(versionInformation);
         Logger.notify("received version info ${i}", Logger.Levels.NotificationMessage, versionInformation);
+        long timestamp = getVersionInformation().getTimestamp();
 
-        if (!Context.getInstance().getContextParams().isVersionCompatible(versionInformation.getVersion(), Context.getInstance().getContextParams().getVersion())) {
+        if (!Context.getInstance().addTimeStamp(new NetworkTimestamp(System.currentTimeMillis(), timestamp))) {
+            server.disconnect(node, CheckoutMessage.Reason.UNSYNCRONIZED_CLOCK);
+        } else if (!Context.getInstance().getContextParams().isVersionCompatible(versionInformation.getVersion(), Context.getInstance().getContextParams().getVersion())) {
             // send bye message.
             Logger.notify("terminating connection.. (incompatible versions)", Logger.Levels.NotificationMessage);
             node.sendMessage(new CheckoutMessage(CheckoutMessage.Reason.SelfConnect));
