@@ -2,6 +2,7 @@ package io.adenium.core;
 
 import io.adenium.core.consensus.AbstractBlockChain;
 import io.adenium.exceptions.AdeniumException;
+import io.adenium.exceptions.InvalidAssetImplementation;
 import io.adenium.network.IpAddressList;
 import io.adenium.network.NetAddress;
 import io.adenium.network.Server;
@@ -9,8 +10,11 @@ import io.adenium.papaya.runtime.OpcodeRegister;
 import io.adenium.serialization.SerializationFactory;
 import io.adenium.utils.FileService;
 import io.adenium.rpc.RpcServer;
+import io.adenium.utils.NetworkTimestamp;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -23,20 +27,21 @@ public class Context {
     private ContextParams           contextParams;
     private ExecutorService         threadPool;
     private AtomicBoolean           isRunning;
-    private IpAddressList ipAddressList;
-    private SerializationFactory serializationFactory;
+    private IpAddressList           ipAddressList;
+    private SerializationFactory    serializationFactory;
     private TransactionPool         transactionPool;
-    private Server server;
+    private Server                  server;
     private Address                 payList[];
-    private AbstractBlockChain blockChain;
-    private OpcodeRegister opcodeRegister;
+    private AbstractBlockChain      blockChain;
+    private OpcodeRegister          opcodeRegister;
     private ResourceManager         resourceManager;
     private RpcServer               rpcServer;
     private TaskScheduler           scheduler;
-    private FileService fileService;
+    private FileService             fileService;
     private CompressionEngine       compressionEngine;
+    private List<NetworkTimestamp>  medianTime;
 
-    public Context(FileService service, int rpcPort, boolean testNet, Address[] payList, Set<NetAddress> forceConnections, boolean pruned, int verbosity) throws AdeniumException, IOException {
+    public Context(FileService service, int rpcPort, boolean testNet, Address[] payList, Set<NetAddress> forceConnections, boolean pruned, int verbosity) throws AdeniumException, IOException, InvalidAssetImplementation {
         Context.instance = this;
         this.scheduler = new TaskScheduler();
         this.database = new Database(service);
@@ -51,6 +56,7 @@ public class Context {
         this.opcodeRegister = new OpcodeRegister();
         this.resourceManager = new ResourceManager();
         this.compressionEngine = new CompressionEngine();
+        this.medianTime = new ArrayList<>();
 
         SerializationFactory.register(serializationFactory);
         OpcodeRegister.register(opcodeRegister);
@@ -145,5 +151,29 @@ public class Context {
 
     public TaskScheduler getScheduler() {
         return scheduler;
+    }
+
+    /*
+        Returns the current time in milliseconds + the average network time difference.
+     */
+    public long currentTimeMillis() {
+        long timeMs = System.currentTimeMillis();
+        long averageTime = 0L;
+
+        for (int i = 0; i < medianTime.size(); i ++) {
+            averageTime += medianTime.get(i).getDifference();
+        }
+
+        return (timeMs + (averageTime / medianTime.size()));
+    }
+
+    public boolean addTimeStamp(NetworkTimestamp timestamp)
+    {
+        if (timestamp.getDifference() > getContextParams().getMaxTimeDifferenceBetweenNodes() || timestamp.getDifference() < -getContextParams().getMaxTimeDifferenceBetweenNodes()) {
+            return false;
+        }
+
+        medianTime.add(timestamp);
+        return true;
     }
 }
