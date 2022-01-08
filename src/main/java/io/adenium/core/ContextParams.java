@@ -34,7 +34,7 @@ public class ContextParams {
     }
 
     public int getMaxBlockWeight() {
-        return 1_000_000;
+        return 4_000_000;
     }
 
     public int getMaxBlockSize() {
@@ -194,7 +194,7 @@ public class ContextParams {
     }
 
     public long getMaxFutureBlockTime() {
-        return 144_000L;
+        return 300_000L;
     }
 
     public long getMaxTransactionUnconfirmedTime() {
@@ -203,5 +203,9 @@ public class ContextParams {
 
     public int getLoggingLevel() {
         return loggingLevel;
+    }
+
+    public long getMaxTimeDifferenceBetweenNodes() {
+        return 120_000L;
     }
 }
