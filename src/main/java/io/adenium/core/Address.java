@@ -69,6 +69,10 @@ public class Address {
         return Utils.equals(Utils.trim(HashUtil.sha256d(prefixed), 0, 4), Utils.trim(address, 21, 4));
     }
 
+    public static byte[] empty() {
+        return new byte[RawLength];
+    }
+
     public byte[] getRaw() {
         return raw;
     }
