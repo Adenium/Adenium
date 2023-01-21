@@ -1,5 +1,6 @@
 package io.adenium.core;
 
+import io.adenium.core.assets.Asset;
 import io.adenium.exceptions.AdeniumException;
 import io.adenium.serialization.SerializableI;
 import io.adenium.utils.VarInt;
@@ -19,6 +20,10 @@ public class Account extends SerializableI {
     private boolean hasAlias;
     /* the account alias */
     private long    alias;
+    /* number of free transactions left */
+    private int     freeTransactionsRemaining;
+    /* block height of last free transaction epoch */
+    private int     blockHeight;
 
     public Account() {
         this(0, 0, false, 0);
@@ -29,6 +34,37 @@ public class Account extends SerializableI {
         this.balance    = balance;
         this.hasAlias   = hasAlias;
         this.alias      = alias;
+    }
+
+    public static void deposit(byte[] address, byte[] uuid, BigInteger supply) throws IOException, AdeniumException {
+        BigInteger balance = Context.getInstance().getDatabase().findAssetBalance(address, uuid);
+        balance = balance.add(supply);
+
+        Context.getInstance().getDatabase().storeAssetBalance(address, uuid, balance);
+    }
+
+    public static void withdraw(byte[] address, byte[] uuid, BigInteger amount) throws IOException, AdeniumException {
+        BigInteger balance = Context.getInstance().getDatabase().findAssetBalance(address, uuid);
+        if (balance.compareTo(amount) >= 0) {
+            balance = balance.subtract(amount);
+        }
+
+        Context.getInstance().getDatabase().storeAssetBalance(address, uuid, balance);
+    }
+
+    public static void updateFreeTransactionCounter(byte address[], Account account) {
+        int blockHeight = account.blockHeight;
+        int freeTxns    = account.freeTransactionsRemaining;
+    }
+
+    public boolean hasEnough(long amount) {
+        return balance >= amount;
+    }
+
+    public static boolean hasEnough(byte[] address, byte[] uuid, BigInteger amount) throws IOException, AdeniumException {
+        BigInteger balance = Context.getInstance().getDatabase().findAssetBalance(address, uuid);
+
+        return balance.compareTo(amount) >= 0;
     }
 
     @Override
