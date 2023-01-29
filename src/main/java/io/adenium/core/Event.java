@@ -18,9 +18,8 @@ public abstract class Event extends SerializableI {
 
     public abstract void apply();
     public abstract void undo();
-    public abstract byte[] getEventBytes();
     public byte[] eventId() {
-        return HashUtil.sha256d(getEventBytes());
+        return HashUtil.sha256d(asSerializedArray());
     }
 
     public abstract JSONObject toJson();

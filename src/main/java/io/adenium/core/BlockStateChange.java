@@ -1,10 +1,9 @@
 package io.adenium.core;
 
-import io.adenium.core.events.DepositFundsEvent;
-import io.adenium.core.events.NewAccountEvent;
-import io.adenium.core.events.RegisterAliasEvent;
-import io.adenium.core.events.WithdrawFundsEvent;
+import io.adenium.core.events.*;
+import io.adenium.utils.Utils;
 
+import java.math.BigInteger;
 import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
@@ -98,11 +97,39 @@ public class BlockStateChange {
         }
 
         for (Event event : transactionEvents) {
-            if (event instanceof DepositFundsEvent && afterWithdraw) {
+            if (event instanceof DepositFundsEvent && afterDeposit && Arrays.equals(((DepositFundsEvent) event).getAddress(), address)) {
                 balance += ((DepositFundsEvent) event).getAmount();
-            } else if (event instanceof WithdrawFundsEvent && afterWithdraw) {
+            } else if (event instanceof WithdrawFundsEvent && afterWithdraw && Arrays.equals(((WithdrawFundsEvent) event).getAddress(), address)) {
                 balance -= ((WithdrawFundsEvent) event).getAmount();
             }
+
+//          Minted coins cannot be used on the same block.
+//          else if (event instanceof MintRewardEvent && afterDeposit && Arrays.equals(((MintRewardEvent) event).getAddress(), address)) {
+//          }
+        }
+
+        return balance;
+    }
+
+    // returns the token balance of type 'UUID' for the account associated with 'address'
+    // if 'afterDeposit' is true then DepositEvents from this state change are summed.
+    // if 'afterWithdraw' is true then WithdrawEvents from this state change are summed.
+    public BigInteger getAccountBalance(byte address[], byte uuid[], boolean afterDeposit, boolean afterWithdraw)
+    {
+        BigInteger balance = BigInteger.ZERO;
+
+        if (Context.getInstance().getDatabase().checkAccountExists(address)) {
+            balance = Context.getInstance().getDatabase().findAccount(address).getBalanceForToken(uuid);
+        }
+
+        for (Event event : transactionEvents) {
+            if (event instanceof AssetTransferEvent && afterDeposit && Arrays.equals(((DepositFundsEvent) event).getAddress(), address)) {
+//                balance += ((DepositFundsEvent) event).getAmount();
+            }
+
+//          Minted coins cannot be used on the same block.
+//          else if (event instanceof MintRewardEvent && afterDeposit && Arrays.equals(((MintRewardEvent) event).getAddress(), address)) {
+//          }
         }
 
         return balance;

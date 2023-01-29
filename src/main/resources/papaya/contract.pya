@@ -1,8 +1,14 @@
+class Human {
+    int height = 0;
+    int age    = 0;
+    int weight = 0;
+}
+
 class test {
     public Field            field = 169090832402304883;
     public int(int, int)    sum_func;
     public bool             call_fun = 16909083240230488301283012840128140284102481123810381203821083020480124810;
-    map                     map;
+    public map              map;
     public address          testAddress;
     public string           str = "AwdybMHK5TeSDoETVuNFM73k6WKS9Uprpa";
     public int              x;

@@ -6,6 +6,9 @@ import io.adenium.utils.ChainMath;
 
 import java.math.BigInteger;
 
+// the period for size adj needs to be perfect.
+// the amount that the size increases by needs to percent based, but not exponential.
+
 public class ContextParams {
     private boolean isTestNet;
     private int     defaultBits;
@@ -34,7 +37,7 @@ public class ContextParams {
     }
 
     public int getMaxBlockWeight() {
-        return 4_000_000;
+        return 2_100_000;
     }
 
     public int getMaxBlockSize() {
@@ -193,8 +196,8 @@ public class ContextParams {
         return Address.fromRaw(new byte[20]);
     }
 
-    public long getMaxFutureBlockTime() {
-        return 300_000L;
+    public long getMaxFutureBlockTimeInSeconds() {
+        return 300;
     }
 
     public long getMaxTransactionUnconfirmedTime() {
@@ -207,5 +210,13 @@ public class ContextParams {
 
     public long getMaxTimeDifferenceBetweenNodes() {
         return 120_000L;
+    }
+
+    public int getBaseTransactionThreshold() {
+        return 1800;
+    }
+
+    public int getTransactionIncreaseLimit() {
+        return 2;
     }
 }

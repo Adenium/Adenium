@@ -530,7 +530,9 @@ public class VarInt {
         stream.write(bits);
     }
 
-    public static void readCompactFlags(BigInteger flags, InputStream stream) throws IOException {
+    public static BigInteger readCompactFlags(InputStream stream) throws IOException {
         int bits = stream.read();
+
+        return new BigInteger("0");
     }
 }

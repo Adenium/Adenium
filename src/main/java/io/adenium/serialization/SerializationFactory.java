@@ -3,6 +3,7 @@ package io.adenium.serialization;
 import io.adenium.core.*;
 import io.adenium.core.transactions.Transaction;
 import io.adenium.crypto.ec.RecoverableSignature;
+import io.adenium.exceptions.InvalidAssetImplementation;
 import io.adenium.network.messages.*;
 import io.adenium.core.assets.Asset;
 import io.adenium.exceptions.InvalidSerialNumberException;
@@ -18,6 +19,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
+import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.LinkedHashSet;
 import java.util.Map;
@@ -32,7 +34,7 @@ public class SerializationFactory {
         magicReferences = new HashMap<>();
     }
 
-    public static void register(SerializationFactory serializationFactory) throws UnknownHostException, AdeniumException {
+    public static void register(SerializationFactory serializationFactory) throws UnknownHostException, AdeniumException, InvalidAssetImplementation {
         Transaction.register(serializationFactory);
         Asset.register(serializationFactory);
 

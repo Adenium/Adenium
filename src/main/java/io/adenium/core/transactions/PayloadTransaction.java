@@ -2,43 +2,44 @@ package io.adenium.core.transactions;
 
 import io.adenium.core.*;
 import io.adenium.core.events.AdeniumTransferEvent;
-import io.adenium.crypto.ec.RecoverableSignature;
-import org.json.JSONObject;
-import io.adenium.core.events.DepositFundsEvent;
 import io.adenium.core.events.WithdrawFundsEvent;
 import io.adenium.crypto.Signature;
+import io.adenium.crypto.ec.RecoverableSignature;
 import io.adenium.encoders.Base16;
 import io.adenium.encoders.Base58;
 import io.adenium.exceptions.AdeniumException;
+import io.adenium.script.Contract;
+import io.adenium.script.Payload;
 import io.adenium.serialization.SerializableI;
 import io.adenium.utils.VarInt;
+import org.json.JSONObject;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.Arrays;
 
-public class BasicTransaction extends Transaction {
-    // must be a valid 20 byte address hash160(hash256(publicKey))
-    private byte recipient[];
-    // value of the transfer
-    private long value;
-    // maximum fee that sender is willing to pay
-    private long fee;
+public class PayloadTransaction extends Transaction {
+    // cost of gas
+    private long gasPrice;
+    // maximum gas to use for this transaction
+    private long gasLimit;
+    // a deployable/invocable payload
+    private Payload payload;
     // transaction index
     private long nonce;
     // a recoverable ec signature
     private RecoverableSignature signature;
 
-    public BasicTransaction() {
-        this(new byte[Address.RawLength], 0, 0, 0);
+    public PayloadTransaction() {
+        this(null, 0, 0, 0);
     }
 
-    public BasicTransaction(byte recipient[], long value, long fee, long nonce) {
-        this.recipient  = recipient;
-        this.value      = value;
-        this.fee        = fee;
-        this.nonce      = nonce;
+    public PayloadTransaction(Payload payload, long gasPrice, long gasLimit, long nonce) {
+        this.gasPrice = gasPrice;
+        this.gasLimit = gasLimit;
+        this.payload  = payload;
+        this.nonce    = nonce;
         this.signature = new RecoverableSignature();
     }
 
@@ -49,12 +50,12 @@ public class BasicTransaction extends Transaction {
 
     @Override
     public long getTransactionValue() {
-        return value;
+        return 0L;
     }
 
     @Override
     public long getTransactionFee() {
-        return fee;
+        return 0L;
     }
 
     @Override
@@ -63,8 +64,8 @@ public class BasicTransaction extends Transaction {
     }
 
     @Override
-    public byte[] getPayload() {
-        return new byte[0];
+    public Payload getPayload() {
+        return payload;
     }
 
     @Override
@@ -74,7 +75,11 @@ public class BasicTransaction extends Transaction {
 
     @Override
     public Address getRecipient() {
-        return Address.fromRaw(recipient);
+        try {
+            return Contract.generateAddress(getSender().getRaw(), nonce);
+        } catch (AdeniumException e) {
+            return null;
+        }
     }
 
     @Override
@@ -178,7 +183,7 @@ public class BasicTransaction extends Transaction {
 
     @Override
     protected Transaction copyForSignature() {
-        return new BasicTransaction(Arrays.copyOf(recipient, recipient.length),value,fee,nonce);
+        return new io.adenium.core.transactions.PayloadTransaction(Arrays.copyOf(recipient, recipient.length),value,fee,nonce);
     }
 
     @Override
@@ -201,11 +206,11 @@ public class BasicTransaction extends Transaction {
 
     @Override
     public <Type extends SerializableI> Type newInstance(Object... object) throws AdeniumException {
-        return (Type) new BasicTransaction();
+        return (Type) new io.adenium.core.transactions.PayloadTransaction();
     }
 
     @Override
     public int getSerialNumber() {
-        return Context.getInstance().getSerialFactory().getSerialNumber(BasicTransaction.class);
+        return Context.getInstance().getSerialFactory().getSerialNumber(io.adenium.core.transactions.PayloadTransaction.class);
     }
 }

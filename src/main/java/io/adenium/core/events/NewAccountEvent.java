@@ -31,11 +31,6 @@ public class NewAccountEvent extends Event {
     }
 
     @Override
-    public byte[] getEventBytes() {
-        return Utils.concatenate("Account Registration".getBytes(), address);
-    }
-
-    @Override
     public JSONObject toJson() {
         return new JSONObject().put("event", this.getClass().getName()).put("address", Base58.encode(address));
     }

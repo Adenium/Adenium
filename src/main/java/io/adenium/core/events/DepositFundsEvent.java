@@ -43,11 +43,6 @@ public class DepositFundsEvent extends Event {
     }
 
     @Override
-    public byte[] getEventBytes() {
-        return Utils.concatenate("Deposit".getBytes(), address, Utils.takeApartLong(amount));
-    }
-
-    @Override
     public JSONObject toJson() {
         return new JSONObject().put("event", this.getClass().getName()).put("address", Base58.encode(address)).put("amount", amount);
     }

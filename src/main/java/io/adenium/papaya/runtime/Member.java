@@ -5,7 +5,7 @@ import io.adenium.utils.ByteArray;
 
 public class Member {
     private final ByteArray         identifier;
-    private final AccessModifier accessModifier;
+    private final AccessModifier    accessModifier;
     private final boolean           isStatic;
 
     public Member(ByteArray identifier, AccessModifier accessModifier, boolean isStatic) {

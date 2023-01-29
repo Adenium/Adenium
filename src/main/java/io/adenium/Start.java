@@ -8,6 +8,7 @@ import io.adenium.crypto.ec.ECKeypair;
 import io.adenium.encoders.Base16;
 import io.adenium.encoders.Base58;
 import io.adenium.exceptions.AdeniumException;
+import io.adenium.exceptions.InvalidAssetImplementation;
 import io.adenium.network.NetAddress;
 import io.adenium.utils.FileService;
 import io.adenium.utils.Logger;
@@ -21,7 +22,7 @@ import java.util.HashSet;
 import java.util.Set;
 
 public class Start {
-    public static void main(String args[]) throws ParseException, AdeniumException, IOException {
+    public static void main(String args[]) throws ParseException, AdeniumException, IOException, InvalidAssetImplementation {
         CryptoLib.getInstance();
         AnsiConsole.systemInstall();
 

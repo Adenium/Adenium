@@ -394,6 +394,7 @@ public class PapayaCompiler extends Compiler {
     @Override
     public PapayaArchive createArchive(String text, String compilerArguments) throws PapayaException, AdeniumException {
         String cArgs[]  = compilerArguments.split(" ");
+        // -identifiers sequential: Identifiers are var-ints that point to an index in an object.
         obfuscationStrategy = new ObfuscationStrategy.KeepNames();
 
         AbstractSyntaxTree ast = parser.parse(lexer.ingest(text, tokens));

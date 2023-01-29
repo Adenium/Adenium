@@ -20,7 +20,7 @@ import java.util.Set;
 
 public class PapayaApplication extends Payload {
     // this contains structures in order of declaration
-    private Map<ByteArray, Struct> structureMap;
+    private Map<ByteArray, Struct>          structureMap;
     private int                             version;
     private BigInteger                      flags;
 
@@ -38,6 +38,10 @@ public class PapayaApplication extends Payload {
     }
 
     @Override
+    public void deploy(Invoker invoker) throws ContractException {
+    }
+
+    @Override
     public void entryPoint(Invoker invoker) throws ContractException {
     }
 
@@ -47,7 +51,7 @@ public class PapayaApplication extends Payload {
     }
 
     public void writePayload(OutputStream stream) throws IOException, AdeniumException {
-        // write a header that contains informations about the application
+        // write a header that contains information about the application
         //TODO: find a better way to write the flags automagically.
         VarInt.writeCompactFlags(flags, stream);
 
@@ -64,7 +68,7 @@ public class PapayaApplication extends Payload {
             // write the structure type.
             StructureType.write(structure.getStructureType(), stream);
 
-            Set<Member> members       = structure.getMembers();
+            Set<Member> members             = structure.getMembers();
             Set<PapayaFunction> functions   = structure.getFunctions();
 
             //write the number of members to expect.
@@ -96,7 +100,52 @@ public class PapayaApplication extends Payload {
 
     @Override
     public void readPayload(InputStream stream) throws IOException, AdeniumException {
+        // read a header that contains information about the application
+        //TODO: find a better way to write the flags automagically.
+        flags = VarInt.readCompactFlags(stream);
+
+        // we first write a compacted uint29 containing the bytecode version.
         version = VarInt.readCompactUInt32(false, stream);
+        // read the amount of structures.
+        int structureMapSize = VarInt.readCompactUInt32(false, stream);
+
+        // read all the structures into the stream.
+        for (int i = 0; i < structureMapSize; i++) {
+            Struct struct = new Struct();
+            // write the structure identifier.
+            BigInteger identifier = VarInt.readCompactUint128(false, stream);
+
+            // write the structure type.
+            StructureType.write(structure.getStructureType(), stream);
+
+            Set<Member> members             = structure.getMembers();
+            Set<PapayaFunction> functions   = structure.getFunctions();
+
+            //write the number of members to expect.
+            VarInt.writeCompactUInt32(members.size(), false, stream);
+            //write the number of functions to expect.
+            VarInt.writeCompactUInt32(functions.size(), false, stream);
+
+            // write all the structure fields.
+            for (Member member : members) {
+                // write the identifier to the stream.
+                VarInt.writeCompactUint128(member.getIdentifierInt(), false, stream);
+                // write the access modifier to the stream.
+                AccessModifier.write(member.getAccessModifier(), stream);
+            }
+
+            // write the function opcodes.
+            for (PapayaFunction function : functions) {
+                // get the function's bytecode.
+                byte byteCode[] = function.getByteCode();
+
+                // write the bytecode length.
+                VarInt.writeCompactUInt32(byteCode.length, false, stream);
+
+                // write the bytecode.
+                stream.write(byteCode);
+            }
+        }
     }
 
     @Override

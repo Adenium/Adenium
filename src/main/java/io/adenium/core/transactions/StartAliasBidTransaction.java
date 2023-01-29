@@ -14,21 +14,28 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 
-public class RegisterAliasTransaction extends Transaction {
+/*
+    Starts a bidding process for an alias.
+    Minimum duration is 7200 blocks.
+ */
+public class StartAliasBidTransaction extends Transaction {
     // nonce
     private long nonce;
-    // fee to register the alia
+    // fee to register the alias
     private long fee;
     // alias
     private long alias;
     // signature of the sender
     private RecoverableSignature signature;
 
-    protected RegisterAliasTransaction() {
+    protected StartAliasBidTransaction() {
         this(0, 0, 0);
     }
 
-    protected RegisterAliasTransaction(long nonce, long fee, long alias) {
+    protected StartAliasBidTransaction(
+            long nonce,
+            long fee,
+            long alias) {
         this.nonce  = nonce;
         this.fee    = fee;
         this.alias  = alias;
@@ -152,7 +159,7 @@ public class RegisterAliasTransaction extends Transaction {
 
     @Override
     protected Transaction copyForSignature() {
-        return new RegisterAliasTransaction(nonce, fee, alias);
+        return new StartAliasBidTransaction(nonce, fee, alias);
     }
 
     @Override
@@ -169,7 +176,7 @@ public class RegisterAliasTransaction extends Transaction {
 
     @Override
     public <Type extends SerializableI> Type newInstance(Object... object) throws AdeniumException {
-        return (Type) new RegisterAliasTransaction();
+        return (Type) new StartAliasBidTransaction();
     }
 
     @Override

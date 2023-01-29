@@ -91,6 +91,18 @@ public abstract class SerializableI {
         return HashUtil.hash160(asByteArray());
     }
 
+    public byte[] hash160() {
+        return HashUtil.hash160(asByteArray());
+    }
+
+    public byte[] sha256() {
+        return HashUtil.sha256(asByteArray());
+    }
+
+    public byte[] sha256d() {
+        return HashUtil.sha256d(asByteArray());
+    }
+
     public abstract int getSerialNumber();
 
     public static void checkFullyRead(int result, int expected) throws IOException {

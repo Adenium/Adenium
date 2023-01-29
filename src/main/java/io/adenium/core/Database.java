@@ -1,17 +1,22 @@
 package io.adenium.core;
 
+import io.adenium.core.assets.Asset;
 import io.adenium.core.transactions.Transaction;
 import io.adenium.encoders.Base16;
 import io.adenium.exceptions.AdeniumException;
+import io.adenium.papaya.ParseRule;
 import io.adenium.serialization.SerializableI;
 import io.adenium.utils.FileService;
+import io.adenium.utils.HashUtil;
 import io.adenium.utils.Utils;
+import io.adenium.utils.VarInt;
 import io.adenium.wallet.Wallet;
 import org.iq80.leveldb.DB;
 import org.iq80.leveldb.Options;
 import org.iq80.leveldb.impl.Iq80DBFactory;
 
 import java.io.*;
+import java.math.BigInteger;
 import java.util.List;
 import java.util.concurrent.locks.ReentrantLock;
 
@@ -22,6 +27,7 @@ public class Database {
 
     private final static byte[]
     AccountPrefix           = new byte[] { 'a' },
+    AssetBalancePrefix      = new byte[] { 'B' },
     AliasPrefix             = new byte[] { 'A' },
     ChainTipPrefix          = new byte[] { 'q' },
     BlockPrefix             = new byte[] { 'b' },
@@ -318,6 +324,31 @@ public class Database {
         }
 
         return null;
+    }
+
+    public void registerAsset(Asset asset) {
+    }
+
+    public Asset findAsset(byte[] uuid) {
+        return null;
+    }
+
+    public void storeAssetBalance(byte address[], byte uuid[], BigInteger amount) throws IOException, AdeniumException {
+        // use hash160 to reduce from 40 to 20 bytes
+        put(Utils.concatenate(AssetBalancePrefix, HashUtil.hash160(Utils.concatenate(address, uuid))), VarInt.writeCompactUint256(amount, false));
+    }
+
+    public BigInteger findAssetBalance(byte address[], byte uuid[]) throws IOException, AdeniumException {
+        byte result[] = get(Utils.concatenate(AssetBalancePrefix, HashUtil.hash160(Utils.concatenate(address, uuid))));
+
+        if (result == null) {
+            return BigInteger.ZERO;
+        }
+
+        ByteArrayInputStream inputStream = new ByteArrayInputStream(result);
+        BigInteger balance = VarInt.readCompactUint256(false, inputStream);
+
+        return balance;
     }
 
     public void storeAccount(byte[] address, Account account) {

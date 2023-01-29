@@ -6,7 +6,7 @@ import io.adenium.core.BlockStateChange;
 
 public class Invoker {
     private final BlockStateChange  blockStateChange;
-    private final Transaction transaction;
+    private final Transaction       transaction;
     private final Address           invoker;
 
     public Invoker(BlockStateChange blockStateChange, Transaction transaction, Address invoker) {

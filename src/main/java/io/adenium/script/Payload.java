@@ -9,9 +9,9 @@ import java.io.InputStream;
 import java.io.OutputStream;
 
 public abstract class Payload extends SerializableI {
-    public Payload() {
-    }
+    public Payload() {}
 
+    public abstract void deploy(Invoker invoker) throws ContractException;
     /* this will call any function marked as "entrypoint" in payload */
     public abstract void entryPoint(Invoker invoker) throws ContractException;
 

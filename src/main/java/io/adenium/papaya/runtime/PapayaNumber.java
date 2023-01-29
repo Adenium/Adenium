@@ -4,15 +4,15 @@ import java.math.BigInteger;
 
 public class PapayaNumber extends PapayaObject {
     private final BigInteger    number;
-    private boolean             allowSignedOperations;
+    private boolean             signed;
 
-    public PapayaNumber(long number, boolean allowSignedOperations) {
-        this(fromLong(number, allowSignedOperations), allowSignedOperations);
+    public PapayaNumber(long number, boolean signed) {
+        this(fromLong(number, signed), signed);
     }
 
-    public PapayaNumber(BigInteger number, boolean allowSignedOperations) {
+    public PapayaNumber(BigInteger number, boolean signed) {
         this.number                 = number;
-        this.allowSignedOperations  = allowSignedOperations;
+        this.signed                 = signed;
     }
 
     @Override

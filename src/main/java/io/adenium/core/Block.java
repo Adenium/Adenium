@@ -24,7 +24,7 @@ public class Block extends SerializableI implements Iterable<Transaction> {
 
     public Block(byte previousHash[], int bits)
     {
-        blockHeader = new BlockHeader(Context.getInstance().getContextParams().getVersion(), Utils.timestampInSeconds(), previousHash, new byte[32], bits, 0);
+        blockHeader = new BlockHeader(Context.getInstance().getContextParams().getVersion(), Utils.networkTimestampInSeconds(), previousHash, new byte[32], bits, 0);
         transactions = new LinkedHashSet<>();
     }
 
@@ -82,8 +82,8 @@ public class Block extends SerializableI implements Iterable<Transaction> {
     public boolean verify(BlockHeader lastDifficultyChange, BlockHeader parent, int blockHeight) {
         // check that this is not the genesis block.
         if (blockHeight > 0) {
-            // reject the block if the timestamp is more than 144 seconds ahead.
-            if (getTimestamp() - System.currentTimeMillis() > Context.getInstance().getContextParams().getMaxFutureBlockTime()) return false;
+            // reject the block if the timestamp is more than 'n' seconds ahead.
+            if (getTimestamp() - Utils.networkTimestampInSeconds() > Context.getInstance().getContextParams().getMaxFutureBlockTimeInSeconds()) return false;
             // reject the block if the timestamp is older than the parent's timestamp.
             if (getTimestamp() <= parent.getTimestamp()) return false;
             // check bits are set correctly.

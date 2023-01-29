@@ -1,5 +1,6 @@
 package io.adenium.utils;
 
+import io.adenium.core.Context;
 import io.adenium.encoders.Base16;
 import io.adenium.encoders.Base58;
 import io.adenium.serialization.SerializableI;
@@ -16,6 +17,12 @@ import java.util.Queue;
 import java.util.Set;
 
 public class Utils {
+    public static BigInteger getHighestPowerOf2(BigInteger bigInteger)
+    {
+        int bitLength = bigInteger.bitLength();
+        return BigInteger.ZERO.setBit(bitLength-1);
+    }
+
     public static final byte[] concatenate(byte[]...arrays)
     {
         int size = 0;
@@ -362,7 +369,11 @@ public class Utils {
     }
 
     public static int timestampInSeconds() {
-        return (int) (System.currentTimeMillis() / 1000) - 1048035600;
+        return (int) ((System.currentTimeMillis() / 1000) - 1048035600);
+    }
+
+    public static int networkTimestampInSeconds() {
+        return (int) ((Context.getInstance().currentTimeMillis() / 1000) - 1048035600);
     }
 
     public static byte[] conditionalExpand(int newLength, byte[] bytes) {

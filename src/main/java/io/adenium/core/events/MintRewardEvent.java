@@ -35,11 +35,6 @@ public class MintRewardEvent extends Event {
     }
 
     @Override
-    public byte[] getEventBytes() {
-        return Utils.concatenate("Mint".getBytes(), address, Utils.takeApartLong(amount));
-    }
-
-    @Override
     public JSONObject toJson() {
         return new JSONObject().put("event", this.getClass().getName()).put("address", Base58.encode(address)).put("amount", amount);
     }
@@ -64,5 +59,9 @@ public class MintRewardEvent extends Event {
     @Override
     public int getSerialNumber() {
         return Context.getInstance().getSerialFactory().getSerialNumber(MintRewardEvent.class);
+    }
+
+    public byte[] getAddress() {
+        return address;
     }
 }

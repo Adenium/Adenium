@@ -2,6 +2,7 @@ package io.adenium.core.transactions;
 
 import io.adenium.core.*;
 import io.adenium.crypto.ec.RecoverableSignature;
+import io.adenium.script.Payload;
 import org.json.JSONObject;
 import io.adenium.crypto.Keypair;
 import io.adenium.crypto.Signature;
@@ -140,7 +141,7 @@ public abstract class Transaction extends SerializableI implements Comparable<Tr
     public abstract long getTransactionValue();
     public abstract long getTransactionFee();
     public abstract long getMaxUnitCost();
-    public abstract byte[] getPayload();
+    public abstract Payload getPayload();
     /*
         shallow checks of the validity of a transactions
         check the receiver is valid
@@ -240,7 +241,7 @@ public abstract class Transaction extends SerializableI implements Comparable<Tr
 
     // a purely monetary transaction
     public static Transaction newAliasRegistration(long nonce, long fee, long alias) {
-        return new RegisterAliasTransaction(nonce, fee, alias);
+        return new StartAliasBidTransaction(nonce, fee, alias);
     }
 
     public static Transaction newMintTransaction(String msg, long reward, Address addresses) {
@@ -251,7 +252,7 @@ public abstract class Transaction extends SerializableI implements Comparable<Tr
         factory.registerClass(MintTransaction.class, new MintTransaction());
         factory.registerClass(BasicTransaction.class, new BasicTransaction());
         factory.registerClass(BasicTransactionToAlias.class, new BasicTransactionToAlias());
-        factory.registerClass(RegisterAliasTransaction.class, new RegisterAliasTransaction());
+        factory.registerClass(StartAliasBidTransaction.class, new StartAliasBidTransaction());
         factory.registerClass(PayloadTransaction.class, new PayloadTransaction());
     }
 
@@ -309,8 +310,8 @@ public abstract class Transaction extends SerializableI implements Comparable<Tr
         }
 
         @Override
-        public byte[] getPayload() {
-            return new byte[0];
+        public Payload getPayload() {
+            return null;
         }
 
         @Override
@@ -453,8 +454,8 @@ public abstract class Transaction extends SerializableI implements Comparable<Tr
         }
 
         @Override
-        public byte[] getPayload() {
-            return new byte[0];
+        public Payload getPayload() {
+            return null;
         }
 
         @Override

@@ -32,11 +32,6 @@ public class RegisterAliasEvent extends Event {
     }
 
     @Override
-    public byte[] getEventBytes() {
-        return Utils.concatenate("Register Alias".getBytes(), address, Utils.takeApartLong(alias));
-    }
-
-    @Override
     public JSONObject toJson() {
         return new JSONObject().put("event", this.getClass().getName()).put("address", Base58.encode(address)).put("alias", alias);
     }

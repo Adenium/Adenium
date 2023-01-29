@@ -1,17 +1,16 @@
 package io.adenium.core.events;
 
-import org.json.JSONObject;
 import io.adenium.core.Event;
 import io.adenium.exceptions.AdeniumException;
 import io.adenium.serialization.SerializableI;
+import org.json.JSONObject;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 
-public class DestroyContractEvent extends Event {
-    public DestroyContractEvent(byte[] contractId) {
-        super();
+public class FreeTransactionEvent extends Event {
+    public FreeTransactionEvent(byte[] address) {
     }
 
     @Override

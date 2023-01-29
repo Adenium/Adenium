@@ -7,6 +7,7 @@ import io.adenium.core.transactions.Transaction;
 import io.adenium.exceptions.ContractOutOfFundsExceptions;
 import io.adenium.exceptions.InvalidTransactionException;
 import io.adenium.exceptions.PapayaException;
+import io.adenium.script.Contract;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -19,8 +20,6 @@ public class Scope {
     private BlockIndex                          block;
     // the 'caller' transaction
     private Transaction                         caller;
-    // the contract in which the point of entry exists
-    private Contract                            contract;
     // the stack
     private Stack<PapayaStack<PapayaHandler>>   stack;
     // tell all subprocesses to continue running
@@ -31,37 +30,44 @@ public class Scope {
     private ProgramCounter                      programCounter;
     private PapayaHandler                       nullreference;
 
-    public Scope(Block block, Transaction caller, Contract contract, ProgramCounter programCounter) {
+    public Scope(Block block, Transaction caller, ProgramCounter programCounter) {
         this.caller     = caller;
-        this.contract   = contract;
         this.stack      = new Stack<>();
         this.programCounter = programCounter;
         this.nullreference  = new DefaultHandler(new PapayaObject());
     }
 
-    public long startProcess(long availableFee) throws InvalidTransactionException, PapayaException, ContractOutOfFundsExceptions {
+    /*
+        Execute a function.
+        Returns the amount of Adenium used to execute this transaction.
+     */
+    public TerminationSignal startProcess(long gasLimit, long gasPrice) throws InvalidTransactionException, PapayaException, ContractOutOfFundsExceptions {
+        long availableGas = gasLimit;
+
         while (getProgramCounter().hasNext() && keepRunning.get()) {
+            // get the next opcode and get it ready for execution.
             OpcodeDefinition opcode = getProgramCounter().next();
 
-            if (availableFee >= opcode.getWeight()) {
+            // if the available gas is greater than the cost of this opcode then execute it.
+            if (availableGas >= opcode.getWeight()) {
+                // execute the opcode.
                 opcode.execute(this);
-                availableFee -= opcode.getWeight();
+                // reduce the available gas.
+                availableGas -= opcode.getWeight();
                 continue;
             }
 
             throw new ContractOutOfFundsExceptions();
         }
 
-        return availableFee;
+        long usedGas = gasLimit - availableGas;
+
+        return new TerminationSignal(gasLimit, gasPrice, usedGas, interruptSignal.get());
     }
 
     public void stopProcesses(int signal) {
         keepRunning.set(false);
         interruptSignal.set(signal);
-    }
-
-    public Contract getContract() {
-        return contract;
     }
 
     public PapayaStack<PapayaHandler> getStack() {

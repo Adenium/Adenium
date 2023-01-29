@@ -33,6 +33,10 @@ public class PapayaObject {
         this allows us to DYNAMICALLY add members to an object.
      */
     private Map<ByteArray, PapayaObject> members;
+    /*
+        If mutable is true then fields can be changed during runtime.
+     */
+    private boolean                      mutable;
 
     public PapayaObject() {
         this(PapayaCallable.Default);

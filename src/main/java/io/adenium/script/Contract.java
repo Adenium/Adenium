@@ -11,6 +11,8 @@ import io.adenium.core.Account;
 import io.adenium.core.Address;
 import io.adenium.core.BlockStateChange;
 import io.adenium.core.Context;
+import io.adenium.utils.HashUtil;
+import io.adenium.utils.Utils;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -18,11 +20,15 @@ import java.io.OutputStream;
 
 public abstract class Contract extends SerializableI {
     public static final int IdentifierLength = 20;
-    // this is generated when the contract is deployed ripemd(sha3(creator+payload)).
+    // this is generated when the contract is deployed ripemd(sha3(creator+tx)).
     private final byte  contractId[];
 
     public Contract(byte contractId[]) {
         this.contractId = contractId;
+    }
+
+    public static Address generateAddress(byte[] sender, long nonce) {
+        return Address.fromRaw(HashUtil.hash160(Utils.concatenate(sender, Utils.takeApart(nonce))));
     }
 
     protected abstract <T> void onDeploy(Transaction transaction, BlockStateChange blockStateChange, T data);
