@@ -45,16 +45,16 @@ public abstract class Token extends Asset {
     }
 
     public boolean isTransferable() {
-        return false;
+        return true;
     }
 
     @Override
     public boolean isFungible() {
-        return false;
+        return true;
     }
 
     @Override
     public BigInteger getTotalSupply() {
-        return null;
+        return totalSupply;
     }
 }
