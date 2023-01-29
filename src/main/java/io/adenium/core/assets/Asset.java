@@ -100,7 +100,7 @@ public abstract class Asset extends SerializableI {
     public abstract void readContent(InputStream stream) throws IOException, AdeniumException;
 
     public static void register(SerializationFactory serializationFactory) throws InvalidAssetImplementation {
-        serializationFactory.registerClass(NonFungibleToken.class, new NonFungibleToken("", "", new byte[32]));
+        // register all asset types here.
     }
 
     public static final byte[] emptyUUID() {
