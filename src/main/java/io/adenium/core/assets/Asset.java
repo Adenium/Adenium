@@ -6,6 +6,7 @@ import io.adenium.serialization.SerializableI;
 import io.adenium.serialization.SerializationFactory;
 import io.adenium.exceptions.AdeniumException;
 import io.adenium.utils.HashUtil;
+import io.adenium.utils.Utils;
 import io.adenium.utils.VarInt;
 
 import java.io.IOException;
@@ -55,7 +56,11 @@ public abstract class Asset extends SerializableI {
     }
 
     public byte[] getUUID() {
-        return HashUtil.hash160(asByteArray());
+        byte name_sha256[] = HashUtil.sha256(name.getBytes(StandardCharsets.UTF_8));
+        byte desc_sha256[] = HashUtil.sha256(desc.getBytes(StandardCharsets.UTF_8));
+        byte ndsc_sha256[] = HashUtil.sha256(Utils.concatenate(name_sha256, desc_sha256));
+
+        return HashUtil.hash160(HashUtil.sha256(Utils.concatenate(ndsc_sha256, txid)));
     }
 
     @Override
