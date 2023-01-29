@@ -1,6 +1,5 @@
 package io.adenium.core;
 
-import io.adenium.core.assets.Asset;
 import io.adenium.exceptions.AdeniumException;
 import io.adenium.serialization.SerializableI;
 import io.adenium.utils.VarInt;
