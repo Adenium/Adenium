@@ -550,4 +550,10 @@ public class Utils {
         jsonDate.put("millisecond", ms);
         return jsonDate;
     }
+
+    public static byte[] copyOf(byte[] array) {
+        byte[] copy = new byte[array.length];
+        System.arraycopy(array, 0, copy, 0, array.length);
+        return copy;
+    }
 }

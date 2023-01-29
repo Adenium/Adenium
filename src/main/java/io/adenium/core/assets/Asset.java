@@ -27,7 +27,7 @@ public abstract class Asset extends SerializableI {
     private byte          txid[];
 
     // default constructor
-    public Asset(String name, String desc) throws InvalidAssetImplementation {
+    public Asset(String name, String desc, byte[] txid) throws InvalidAssetImplementation {
         byte shortNameBytes[] = name.getBytes(StandardCharsets.UTF_8);
         if (shortNameBytes.length > 32) throw new InvalidAssetImplementation("Short name is too long");
 
@@ -36,7 +36,7 @@ public abstract class Asset extends SerializableI {
 
         this.name       = name;
         this.desc       = desc;
-        this.txid       = new byte[Transaction.UniqueIdentifierLength];
+        this.txid       = Utils.copyOf(txid);
     }
 
     public void setTransactionId(byte txid[]) {
